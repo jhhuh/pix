@@ -1,6 +1,8 @@
 # pix
 
-Exploring the [Nix C API](https://nix.dev/manual/nix/latest/c-api) from C++ and Python.
+Nix functionality implemented in Python with minimal FFI.
+
+The C++ code in `c/` is a reference implementation using the [Nix C API](https://nix.dev/manual/nix/latest/c-api) directly. The Python code in `pix/` is the main project — the goal is to implement as much as possible in pure Python, only dropping into FFI where absolutely necessary.
 
 ## Setup
 
@@ -12,18 +14,6 @@ nix develop
 
 ## Usage
 
-### C++
-
-```
-cd c
-make
-./main
-```
-
-### Python
-
 ```
 python pix/main.py
 ```
-
-Both programs open a Nix store, evaluate `builtins.nixVersion`, and print the result.

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Experimental project exploring the Nix C API from both C++ and Python. Both implementations evaluate Nix expressions (e.g., `builtins.nixVersion`) via the libexpr C bindings.
+Nix functionality implemented in Python with minimal FFI. The goal is to implement as much as possible in pure Python, only using C FFI where absolutely necessary. The C++ code in `c/` serves as a reference implementation against the Nix C API.
 
 ## Development Environment
 
@@ -31,6 +31,6 @@ Uses ctypes to load `libnixexprc.so` (located via `pkgconfig`).
 
 ## Architecture
 
-- `c/main.cc` — C++ implementation using the Nix C API directly (nix_api_expr.h, nix_api_util.h, nix_api_value.h). Opens a Nix store, creates an eval state, evaluates a string expression, and prints the result.
-- `pix/main.py` — Python equivalent using ctypes FFI against the same Nix C libraries. Mirrors the C++ flow but is less complete (no cleanup/free calls yet).
+- `pix/` — Main project. Python implementation of Nix functionality, minimizing FFI usage.
+- `c/` — Reference implementation using the Nix C API directly (nix_api_expr.h, nix_api_util.h, nix_api_value.h). Useful for understanding the C API behavior before reimplementing in Python.
 - `flake.nix` — Nix flake providing the dev shell. Pinned to nixos-24.11, x86_64-linux only.
