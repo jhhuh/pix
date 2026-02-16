@@ -9,7 +9,7 @@
       dev-shell = pkgs.mkShell {
         nativeBuildInputs = [
           pkgs.pkg-config
-          (pkgs.python3.withPackages (pp: with pp; [ ipython pkgconfig ]))
+          (pkgs.python3.withPackages (pp: with pp; [ ipython pkgconfig pytest ]))
         ];
         buildInputs = [ pkgs.nix.dev ];
       };
