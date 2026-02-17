@@ -1,0 +1,59 @@
+site_name: pix
+site_description: Pure Python implementation of Nix store operations
+repo_url: https://github.com/jhhuh/pix
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue grey
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue grey
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - content.code.copy
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - toc.integrate
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - def_list
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - CLI Reference: cli.md
+  - API Reference:
+    - api/index.md
+    - pix.base32: api/base32.md
+    - pix.hash: api/hash.md
+    - pix.nar: api/nar.md
+    - pix.store_path: api/store_path.md
+    - pix.derivation: api/derivation.md
+    - pix.daemon: api/daemon.md
+  - Internals:
+    - internals/index.md
+    - Store Paths: internals/store-paths.md
+    - NAR Format: internals/nar-format.md
+    - Daemon Protocol: internals/daemon-protocol.md
+    - Derivations: internals/derivations.md
+    - Base32 Encoding: internals/base32.md

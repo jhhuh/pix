@@ -45,3 +45,8 @@ Append-only log of what was attempted, what failed, what worked, and why.
 - Cross-verified against `nix derivation show`, `nix store add-path`, `nix path-info`. All match.
 - Wrote full README.md and CLAUDE.md.
 - Commit — "Add full documentation for all modules".
+
+## 2026-02-17 ~03:58 — MkDocs site
+
+- Created MkDocs site with Material theme: 16 pages across API, CLI, and Internals sections.
+- Commit — "Add MkDocs documentation site with Material theme".
