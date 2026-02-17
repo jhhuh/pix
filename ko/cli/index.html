@@ -11,10 +11,6 @@
       
       
       
-        <link rel="prev" href="../nar/">
-      
-      
-        <link rel="next" href="../derivation/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -22,7 +18,7 @@
     
     
       
-        <title>pix.store_path - pix</title>
+        <title>CLI 레퍼런스 - pix</title>
       
     
     
@@ -74,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#pixstore_path" class="md-skip">
+        <a href="#cli" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              pix.store_path
+              CLI 레퍼런스
             
           </span>
         </div>
@@ -318,8 +314,6 @@
       
   
   
-    
-  
   
   
     
@@ -349,16 +343,18 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
         
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../" class="md-nav__link ">
+            <a href="../../api/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -375,7 +371,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             API Reference
@@ -391,7 +387,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../base32/" class="md-nav__link">
+      <a href="../../api/base32/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -412,7 +408,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../hash/" class="md-nav__link">
+      <a href="../../api/hash/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -433,7 +429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../nar/" class="md-nav__link">
+      <a href="../../api/nar/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -451,30 +447,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    pix.store_path
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../api/store_path/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -483,119 +459,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#constants" class="md-nav__link">
-    <span class="md-ellipsis">
-      Constants
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Constants">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#store_dir" class="md-nav__link">
-    <span class="md-ellipsis">
-      STORE_DIR
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#hash_bytes" class="md-nav__link">
-    <span class="md-ellipsis">
-      HASH_BYTES
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Functions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Functions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#make_store_pathtype_prefix-str-inner_hash-bytes-name-str-str" class="md-nav__link">
-    <span class="md-ellipsis">
-      make_store_path(type_prefix: str, inner_hash: bytes, name: str) -&gt; str
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#make_text_store_pathname-str-content-bytes-references-liststr-none-none-str" class="md-nav__link">
-    <span class="md-ellipsis">
-      make_text_store_path(name: str, content: bytes, references: list[str] | None = None) -&gt; str
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#make_source_store_pathname-str-nar_hash-bytes-references-liststr-none-none-str" class="md-nav__link">
-    <span class="md-ellipsis">
-      make_source_store_path(name: str, nar_hash: bytes, references: list[str] | None = None) -&gt; str
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#make_fixed_output_pathname-str-hash_algo-str-content_hash-bytes-recursive-bool-false-str" class="md-nav__link">
-    <span class="md-ellipsis">
-      make_fixed_output_path(name: str, hash_algo: str, content_hash: bytes, recursive: bool = False) -&gt; str
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#make_output_pathdrv_hash-bytes-output_name-str-name-str-str" class="md-nav__link">
-    <span class="md-ellipsis">
-      make_output_path(drv_hash: bytes, output_name: str, name: str) -&gt; str
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -608,7 +471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../derivation/" class="md-nav__link">
+      <a href="../../api/derivation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -629,7 +492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../daemon/" class="md-nav__link">
+      <a href="../../api/daemon/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -848,74 +711,150 @@
   
 
 
-<h1 id="pixstore_path">pix.store_path<a class="headerlink" href="#pixstore_path" title="Permanent link">&para;</a></h1>
-<p>Compute Nix store paths. A store path is <code>/nix/store/&lt;hash&gt;-&lt;name&gt;</code> where <code>&lt;hash&gt;</code> is 32 characters of Nix base32 encoding a 160-bit hash.</p>
-<p>See <a href="../../internals/store-paths/">Internals: Store Paths</a> for the full algorithm.</p>
-<h2 id="constants">Constants<a class="headerlink" href="#constants" title="Permanent link">&para;</a></h2>
-<h3 id="store_dir"><code>STORE_DIR</code><a class="headerlink" href="#store_dir" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">STORE_DIR</span> <span class="o">=</span> <span class="s2">&quot;/nix/store&quot;</span>
+<h1 id="cli">CLI 레퍼런스<a class="headerlink" href="#cli" title="Permanent link">&para;</a></h1>
+<p>pix를 Python 모듈로 실행합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>&lt;command&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
-<h3 id="hash_bytes"><code>HASH_BYTES</code><a class="headerlink" href="#hash_bytes" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">HASH_BYTES</span> <span class="o">=</span> <span class="mi">20</span>  <span class="c1"># 160 bits</span>
+<h2 id="_1">명령어<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<h3 id="hash-path-nar"><code>hash-path</code> — 경로의 NAR 해시<a class="headerlink" href="#hash-path-nar" title="Permanent link">&para;</a></h3>
+<p>파일 또는 디렉터리의 NAR 직렬화에 대한 SHA-256 해시를 계산합니다. <code>nix hash path</code>와 동일합니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>hash-path<span class="w"> </span>&lt;path&gt;<span class="w"> </span><span class="o">[</span>--base32<span class="o">]</span>
 </code></pre></div>
-<h2 id="functions">Functions<a class="headerlink" href="#functions" title="Permanent link">&para;</a></h2>
-<h3 id="make_store_pathtype_prefix-str-inner_hash-bytes-name-str-str"><code>make_store_path(type_prefix: str, inner_hash: bytes, name: str) -&gt; str</code><a class="headerlink" href="#make_store_pathtype_prefix-str-inner_hash-bytes-name-str-str" title="Permanent link">&para;</a></h3>
-<p>Low-level store path computation. Most callers should use the typed helpers below.</p>
-<p>Computes the fingerprint <code>&lt;type&gt;:sha256:&lt;hex&gt;:/nix/store:&lt;name&gt;</code>, hashes it with SHA-256, XOR-folds to 20 bytes, and encodes in Nix base32.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span> <span class="nn">pix.store_path</span> <span class="kn">import</span> <span class="n">make_store_path</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span> <span class="nn">pix.hash</span> <span class="kn">import</span> <span class="n">sha256</span>
+<table>
+<thead>
+<tr>
+<th>플래그</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--base32</code></td>
+<td>16진수 대신 Nix base32로 출력</td>
+</tr>
+</tbody>
+</table>
+<p><strong>예제:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>$<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>hash-path<span class="w"> </span>./pix/base32.py
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>sha256:0a43087...
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">h</span> <span class="o">=</span> <span class="n">sha256</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;some content&quot;</span><span class="p">)</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">path</span> <span class="o">=</span> <span class="n">make_store_path</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="s2">&quot;example.txt&quot;</span><span class="p">)</span>
-</code></pre></div>
-<hr />
-<h3 id="make_text_store_pathname-str-content-bytes-references-liststr-none-none-str"><code>make_text_store_path(name: str, content: bytes, references: list[str] | None = None) -&gt; str</code><a class="headerlink" href="#make_text_store_pathname-str-content-bytes-references-liststr-none-none-str" title="Permanent link">&para;</a></h3>
-<p>Store path for a text file. Equivalent to <code>builtins.toFile</code> or <code>pkgs.writeText</code>.</p>
-<p>The inner hash is <code>sha256(content)</code>. The type prefix is <code>text</code> with references appended.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span> <span class="nn">pix.store_path</span> <span class="kn">import</span> <span class="n">make_text_store_path</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Simple text file</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">path</span> <span class="o">=</span> <span class="n">make_text_store_path</span><span class="p">(</span><span class="s2">&quot;hello.txt&quot;</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;hello world&quot;</span><span class="p">)</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># &#39;/nix/store/qbfcv31xi1wjisxwl4b2nk1a8jqxbcf5-hello.txt&#39;</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Text file that references another store path</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">path</span> <span class="o">=</span> <span class="n">make_text_store_path</span><span class="p">(</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="s2">&quot;script.sh&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="sa">b</span><span class="s2">&quot;#!/bin/sh</span><span class="se">\n</span><span class="s2">exec /nix/store/...-bash/bin/bash&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="n">references</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;/nix/store/...-bash&quot;</span><span class="p">]</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="p">)</span>
-</code></pre></div>
-<hr />
-<h3 id="make_source_store_pathname-str-nar_hash-bytes-references-liststr-none-none-str"><code>make_source_store_path(name: str, nar_hash: bytes, references: list[str] | None = None) -&gt; str</code><a class="headerlink" href="#make_source_store_pathname-str-nar_hash-bytes-references-liststr-none-none-str" title="Permanent link">&para;</a></h3>
-<p>Store path for a source directory or file. This is what happens when you use <code>builtins.path</code>, <code>filterSource</code>, or a bare path import in Nix.</p>
-<p>The inner hash is the SHA-256 of the NAR serialization.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span> <span class="nn">pix.store_path</span> <span class="kn">import</span> <span class="n">make_source_store_path</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span> <span class="nn">pix.nar</span> <span class="kn">import</span> <span class="n">nar_hash</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">h</span> <span class="o">=</span> <span class="n">nar_hash</span><span class="p">(</span><span class="s2">&quot;./my-project&quot;</span><span class="p">)</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">path</span> <span class="o">=</span> <span class="n">make_source_store_path</span><span class="p">(</span><span class="s2">&quot;my-project&quot;</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
-</code></pre></div>
-<hr />
-<h3 id="make_fixed_output_pathname-str-hash_algo-str-content_hash-bytes-recursive-bool-false-str"><code>make_fixed_output_path(name: str, hash_algo: str, content_hash: bytes, recursive: bool = False) -&gt; str</code><a class="headerlink" href="#make_fixed_output_pathname-str-hash_algo-str-content_hash-bytes-recursive-bool-false-str" title="Permanent link">&para;</a></h3>
-<p>Store path for a fixed-output derivation result (like <code>fetchurl</code>, <code>fetchgit</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span> <span class="nn">pix.store_path</span> <span class="kn">import</span> <span class="n">make_fixed_output_path</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># Flat file (fetchurl with sha256)</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">path</span> <span class="o">=</span> <span class="n">make_fixed_output_path</span><span class="p">(</span><span class="s2">&quot;source.tar.gz&quot;</span><span class="p">,</span> <span class="s2">&quot;sha256&quot;</span><span class="p">,</span> <span class="n">hash_bytes</span><span class="p">)</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1"># Recursive (fetchgit, fetchFromGitHub)</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">path</span> <span class="o">=</span> <span class="n">make_fixed_output_path</span><span class="p">(</span><span class="s2">&quot;source&quot;</span><span class="p">,</span> <span class="s2">&quot;sha256&quot;</span><span class="p">,</span> <span class="n">nar_hash_bytes</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>$<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>hash-path<span class="w"> </span>./pix/base32.py<span class="w"> </span>--base32
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>sha256:1l1a9cfyhln3s40sb9b2w2h4z8p3566xkbs84vk819h3107ahkvl
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>$<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>hash-path<span class="w"> </span>./my-directory<span class="w"> </span>--base32
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>sha256:1vrbglcwc4gpln263rg69jq6vgq8p3ibspdg7lzyxcyc0ryg5wn2
 </code></pre></div>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>For <code>recursive=True</code> with <code>sha256</code>, the path is computed as a source path directly (same as <code>make_source_store_path</code>). For other combinations, an intermediate hash is computed first.</p>
+<p class="admonition-title">참고</p>
+<p><code>hash-path</code>는 원시 파일 바이트가 아니라 <strong>NAR 직렬화</strong>를 해싱합니다. 파일 타입 메타데이터와 디렉터리의 경우 정렬된 엔트리 이름이 포함됩니다. 원시 콘텐츠 해싱에는 <code>hash-file</code>을 사용하세요.</p>
 </div>
 <hr />
-<h3 id="make_output_pathdrv_hash-bytes-output_name-str-name-str-str"><code>make_output_path(drv_hash: bytes, output_name: str, name: str) -&gt; str</code><a class="headerlink" href="#make_output_pathdrv_hash-bytes-output_name-str-name-str-str" title="Permanent link">&para;</a></h3>
-<p>Store path for a derivation output, given the derivation's modular hash (from <code>hash_derivation_modulo</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span> <span class="nn">pix.store_path</span> <span class="kn">import</span> <span class="n">make_output_path</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">path</span> <span class="o">=</span> <span class="n">make_output_path</span><span class="p">(</span><span class="n">drv_hash</span><span class="p">,</span> <span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;hello-2.12.2&quot;</span><span class="p">)</span>
+<h3 id="hash-file-sha-256"><code>hash-file</code> — 파일의 플랫 SHA-256<a class="headerlink" href="#hash-file-sha-256" title="Permanent link">&para;</a></h3>
+<p>파일의 원시 바이트를 해싱합니다 (NAR 래핑 없음). <code>nix hash file</code>과 동일합니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>hash-file<span class="w"> </span>&lt;path&gt;<span class="w"> </span><span class="o">[</span>--base32<span class="o">]</span>
+</code></pre></div>
+<p><strong>예제:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>$<span class="w"> </span><span class="nb">echo</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;hello&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/hello.txt
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>$<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>hash-file<span class="w"> </span>/tmp/hello.txt<span class="w"> </span>--base32
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>sha256:094qif9n4cq4fdg459qzbhg1c6wywawwaaivx0k0x8xhbyx4vwic
+</code></pre></div>
+<hr />
+<h3 id="store-path"><code>store-path</code> — 스토어 경로 계산<a class="headerlink" href="#store-path" title="Permanent link">&para;</a></h3>
+<p>로컬 파일 또는 디렉터리의 Nix 스토어 경로를 계산합니다. <code>builtins.path</code>나 <code>filterSource</code>를 통해 추가된 것처럼 계산합니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>store-path<span class="w"> </span>&lt;path&gt;<span class="w"> </span><span class="o">[</span>--name<span class="w"> </span>NAME<span class="o">]</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>플래그</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--name</code></td>
+<td>스토어 객체 이름 지정 (기본값: 경로의 basename)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>예제:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>$<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>store-path<span class="w"> </span>./my-source
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>/nix/store/pagr3c3r57k8h9zqhb89cqihhc9sbz03-my-source
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>$<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>store-path<span class="w"> </span>./my-source<span class="w"> </span>--name<span class="w"> </span>custom-name
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>/nix/store/abc123...-custom-name
+</code></pre></div>
+<hr />
+<h3 id="drv-show-drv-json"><code>drv-show</code> — <code>.drv</code>를 JSON으로 파싱<a class="headerlink" href="#drv-show-drv-json" title="Permanent link">&para;</a></h3>
+<p>Nix 스토어의 <code>.drv</code> 파일을 파싱하여 포맷된 JSON으로 표시합니다. <code>nix derivation show</code>와 동일합니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>drv-show<span class="w"> </span>&lt;drv-path&gt;
+</code></pre></div>
+<p><strong>예제:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>$<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>drv-show<span class="w"> </span>/nix/store/...-hello-2.12.2.drv
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="o">{</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="s2">&quot;outputs&quot;</span>:<span class="w"> </span><span class="o">{</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="s2">&quot;out&quot;</span>:<span class="w"> </span><span class="o">{</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">      </span><span class="s2">&quot;path&quot;</span>:<span class="w"> </span><span class="s2">&quot;/nix/store/...-hello-2.12.2&quot;</span>,
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">      </span><span class="s2">&quot;hashAlgo&quot;</span>:<span class="w"> </span><span class="s2">&quot;&quot;</span>,
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">      </span><span class="s2">&quot;hash&quot;</span>:<span class="w"> </span><span class="s2">&quot;&quot;</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="o">}</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">  </span><span class="o">}</span>,
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">  </span><span class="s2">&quot;inputDrvs&quot;</span>:<span class="w"> </span><span class="o">{</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">    </span><span class="s2">&quot;/nix/store/...-bash.drv&quot;</span>:<span class="w"> </span><span class="o">[</span><span class="s2">&quot;out&quot;</span><span class="o">]</span>,
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">    </span><span class="s2">&quot;/nix/store/...-stdenv.drv&quot;</span>:<span class="w"> </span><span class="o">[</span><span class="s2">&quot;out&quot;</span><span class="o">]</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">  </span><span class="o">}</span>,
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">  </span><span class="s2">&quot;inputSrcs&quot;</span>:<span class="w"> </span><span class="o">[</span><span class="s2">&quot;/nix/store/...-default-builder.sh&quot;</span><span class="o">]</span>,
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="w">  </span><span class="s2">&quot;platform&quot;</span>:<span class="w"> </span><span class="s2">&quot;x86_64-linux&quot;</span>,
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="w">  </span><span class="s2">&quot;builder&quot;</span>:<span class="w"> </span><span class="s2">&quot;/nix/store/...-bash/bin/bash&quot;</span>,
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="w">  </span><span class="s2">&quot;args&quot;</span>:<span class="w"> </span><span class="o">[</span><span class="s2">&quot;-e&quot;</span>,<span class="w"> </span><span class="s2">&quot;/nix/store/...-default-builder.sh&quot;</span><span class="o">]</span>,
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="w">  </span><span class="s2">&quot;env&quot;</span>:<span class="w"> </span><span class="o">{</span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;hello&quot;</span>,<span class="w"> </span><span class="s2">&quot;version&quot;</span>:<span class="w"> </span><span class="s2">&quot;2.12.2&quot;</span>,<span class="w"> </span>...<span class="o">}</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="o">}</span>
+</code></pre></div>
+<hr />
+<h3 id="path-info"><code>path-info</code> — 스토어 경로 정보 조회<a class="headerlink" href="#path-info" title="Permanent link">&para;</a></h3>
+<p>Nix 데몬에서 스토어 경로의 메타데이터를 조회합니다. 실행 중인 데몬이 필요합니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>path-info<span class="w"> </span>&lt;store-path&gt;
+</code></pre></div>
+<p><strong>예제:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>$<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>path-info<span class="w"> </span>/nix/store/...-hello-2.12.2
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>deriver:<span class="w"> </span>/nix/store/...-hello-2.12.2.drv
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>nar-hash:<span class="w"> </span>sha256:1abc...
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>nar-size:<span class="w"> </span><span class="m">53856</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>references:<span class="w"> </span>/nix/store/...-glibc<span class="w"> </span>/nix/store/...-hello-2.12.2
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>sigs:<span class="w"> </span>cache.nixos.org-1:abc123...
+</code></pre></div>
+<hr />
+<h3 id="is-valid"><code>is-valid</code> — 스토어 경로 유효성 확인<a class="headerlink" href="#is-valid" title="Permanent link">&para;</a></h3>
+<p>스토어 경로가 존재하고 유효한지 확인합니다. 유효하면 종료 코드 0, 아니면 1을 반환합니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>is-valid<span class="w"> </span>&lt;store-path&gt;
+</code></pre></div>
+<p><strong>예제:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>$<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>is-valid<span class="w"> </span>/nix/store/...-hello-2.12.2
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>valid
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>$<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>is-valid<span class="w"> </span>/nix/store/aaaa...-nonexistent
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>invalid
+</code></pre></div>
+<hr />
+<h3 id="add-text"><code>add-text</code> — 스토어에 텍스트 추가<a class="headerlink" href="#add-text" title="Permanent link">&para;</a></h3>
+<p>텍스트 문자열을 Nix 스토어에 추가합니다. <code>builtins.toFile</code>과 같습니다. content가 <code>-</code>이거나 생략되면 stdin에서 읽습니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>add-text<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="o">[</span>content<span class="o">]</span>
+</code></pre></div>
+<p><strong>예제:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>$<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>add-text<span class="w"> </span>hello.txt<span class="w"> </span><span class="s2">&quot;hello world&quot;</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>/nix/store/qbfcv31xi1wjisxwl4b2nk1a8jqxbcf5-hello.txt
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>$<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;from stdin&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>add-text<span class="w"> </span>piped.txt
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>/nix/store/...-piped.txt
+</code></pre></div>
+<hr />
+<h3 id="build"><code>build</code> — 스토어 경로 빌드<a class="headerlink" href="#build" title="Permanent link">&para;</a></h3>
+<p>Nix 데몬을 통해 하나 이상의 derivation 출력을 빌드합니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>build<span class="w"> </span>&lt;path&gt;...
+</code></pre></div>
+<p><strong>예제:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>$<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>build<span class="w"> </span>/nix/store/...-hello-2.12.2.drv^out
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>build<span class="w"> </span>succeeded
 </code></pre></div>
 
 
