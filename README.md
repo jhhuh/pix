@@ -54,6 +54,37 @@ pytest tests/ -v
 
 The tests compare pix output against `nix hash path`, `nix path-info`, and the daemon's own store path computation.
 
+## How this was built
+
+This project was also an experiment in agentic coding — the entire codebase
+was written by an AI agent (Claude) from internalized knowledge of Nix, with
+no reference implementation to copy from. The question: how much can agentic
+coding achieve without a reference project?
+
+**What worked from pure knowledge** (correct on first write):
+
+- Base32 encoding with Nix's custom alphabet and reversed bit extraction
+- XOR-fold hash compression
+- NAR wire format (uint64-LE framing, 8-byte padding, sorted entries)
+- Store path fingerprinting and computation
+- ATerm `.drv` parsing and serialization
+- `hashDerivationModulo` for breaking circular output-path dependencies
+- 23 of 28 tests passed on the first run
+
+**What required debugging against the real system:**
+
+- **Daemon handshake field ordering** — the version string (protocol >= 1.33)
+  must be read *before* the trusted status (>= 1.35). Got this backwards.
+  Caught when `0x352e38322e32` showed up in an error — that's ASCII `"2.28.5"`,
+  the daemon's version string being misread as a stderr message type.
+- **Trailing colon in type prefix** — `"text:"` vs `"text"` when the references
+  list is empty. One character difference, completely different store path.
+  Caught only by end-to-end verification against the daemon's `add_text_to_store`.
+
+Both bugs were in protocol-level details that are implicit in Nix's C++ source
+but not documented anywhere. Algorithms and data formats were easy; protocol
+sequencing and delimiter edge cases were not.
+
 ## Docs
 
 Detailed walkthroughs of each algorithm:

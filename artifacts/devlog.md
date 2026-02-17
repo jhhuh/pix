@@ -57,3 +57,12 @@ Append-only log of what was attempted, what failed, what worked, and why.
 - All documentation, source comments, and project framing rewritten with "why" explanations and Nix C++ source references.
 - CLAUDE.md gained principle: "Priority: readability over performance."
 - Commit — "Reframe as educational project for exploring Nix internals".
+
+## 2026-02-17 ~04:23 — Agentic coding experiment (user-steered)
+
+- User revealed secondary purpose: testing how much agentic coding can achieve without a reference project.
+- Added "How this was built" section to README with specific data points.
+- Commit — "Document the agentic coding experiment in README".
+- Created GitHub repo via `gh repo create pix --public --source=. --push`.
+- Set description + topics: `nix`, `nix-store`, `python`, `educational`, `reverse-engineering`, `agentic-coding`.
+- Deployed MkDocs to GitHub Pages.
