@@ -72,3 +72,9 @@ Append-only log of what was attempted, what failed, what worked, and why.
 - Created 15 Korean translation pages, dual-config i18n approach (`mkdocs.yml` + `mkdocs-ko.yml`), language switcher.
 - **Gotcha:** `mkdocs gh-deploy` wipes `site/ko/` because it runs its own `mkdocs build`. Fix: build both sites separately, then deploy with `ghp-import -n -p -f site`.
 - Commit — "Add Korean translation for documentation".
+
+## 2026-02-17 ~05:20 — Cleanup
+
+- Removed `c/` directory (old C++ Nix API hello-world, irrelevant to educational purpose) and C-related dev dependencies from `flake.nix`.
+- **Gotcha:** Compiled binary `c/main` was accidentally tracked. Fix: `git rm --cached c/main`.
+- Commit — "Remove c/ directory and C-related dev dependencies".

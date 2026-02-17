@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Educational project: explore and understand Nix internals through readable Python. Each module reimplements one Nix concept (base32, NAR, store paths, derivations, daemon protocol) in straightforward Python, verified against the real `nix` CLI. The C++ code in `c/` is a reference showing the same operations via the Nix C API.
+Educational project: explore and understand Nix internals through readable Python. Each module reimplements one Nix concept (base32, NAR, store paths, derivations, daemon protocol) in straightforward Python, verified against the real `nix` CLI.
 
 **Priority: readability over performance.** Comments should explain *why* Nix does things a certain way, not just what the code does. When modifying code, preserve or improve the educational value.
 
@@ -39,7 +39,7 @@ Reading order (dependency chain):
 5. `pix/derivation.py` — ATerm `.drv` parser + `hashDerivationModulo` (breaks circular output-path deps)
 6. `pix/daemon.py` — Unix socket protocol: magic handshake, uint64-LE framing, stderr log draining
 
-Also: `c/main.cc` (C++ reference), `pix/main.py` (CLI), `docs/` (MkDocs site)
+Also: `pix/main.py` (CLI), `docs/` (MkDocs site)
 
 ## Key gotchas
 

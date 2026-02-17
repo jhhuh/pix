@@ -8,10 +8,8 @@
       pkgs = import inputs.nixpkgs { inherit system; };
       dev-shell = pkgs.mkShell {
         nativeBuildInputs = [
-          pkgs.pkg-config
-          (pkgs.python3.withPackages (pp: with pp; [ ipython pkgconfig pytest mkdocs mkdocs-material ]))
+          (pkgs.python3.withPackages (pp: with pp; [ ipython pytest mkdocs mkdocs-material ]))
         ];
-        buildInputs = [ pkgs.nix.dev ];
       };
     in
       {
