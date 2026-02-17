@@ -50,3 +50,10 @@ Append-only log of what was attempted, what failed, what worked, and why.
 
 - Created MkDocs site with Material theme: 16 pages across API, CLI, and Internals sections.
 - Commit — "Add MkDocs documentation site with Material theme".
+
+## 2026-02-17 ~04:13 — Educational reframing (user-steered)
+
+- User clarified project purpose: "explore/understand nix internals in terms of more easy to read python code."
+- All documentation, source comments, and project framing rewritten with "why" explanations and Nix C++ source references.
+- CLAUDE.md gained principle: "Priority: readability over performance."
+- Commit — "Reframe as educational project for exploring Nix internals".

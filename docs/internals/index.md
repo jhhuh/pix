@@ -1,49 +1,46 @@
 # Internals
 
-How Nix works under the hood — the formats, protocols, and algorithms that pix reimplements in Python.
+How Nix actually works — the formats, protocols, and algorithms, explained through the Python code that reimplements them.
 
-These pages document the specifications that pix is built against. They're useful as standalone references for anyone working with Nix internals, not just pix users.
+Each page pairs an explanation of the concept with pointers to the pix source that implements it. Read the page, then read the code — it should click.
 
-## Topics
+## Start here
 
-| Page | What it covers |
-|------|---------------|
-| [Store Paths](store-paths.md) | How `/nix/store/<hash>-<name>` is computed |
-| [NAR Format](nar-format.md) | The Nix Archive wire format |
-| [Daemon Protocol](daemon-protocol.md) | Unix socket protocol between client and `nix-daemon` |
-| [Derivations](derivations.md) | ATerm `.drv` file format and `hashDerivationModulo` |
-| [Base32 Encoding](base32.md) | Nix base32 vs RFC 4648 |
+| Page | The question it answers |
+|------|------------------------|
+| [Store Paths](store-paths.md) | How does Nix compute `/nix/store/<hash>-<name>`? Why 32 characters? |
+| [NAR Format](nar-format.md) | What's inside a NAR archive? Why not tar? |
+| [Daemon Protocol](daemon-protocol.md) | How do `nix build` and `nix-store` talk to the daemon? |
+| [Derivations](derivations.md) | What's in a `.drv` file? How does `hashDerivationModulo` break the circular dependency? |
+| [Base32 Encoding](base32.md) | Why doesn't Nix use standard base32? What's different? |
 
-## Data flow
+## The big picture
 
-How the pieces fit together when Nix evaluates `builtins.toFile "hello.txt" "hello world"`:
-
-```
-1. Content: "hello world" (11 bytes)
-
-2. Inner hash: sha256("hello world")
-   = b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9
-
-3. Fingerprint: "text:sha256:b94d27b9...:/nix/store:hello.txt"
-
-4. Fingerprint hash: sha256(fingerprint)
-   = <32 bytes>
-
-5. Compressed: XOR-fold to 20 bytes
-
-6. Encoded: Nix base32 (32 chars)
-
-7. Store path: /nix/store/<32 chars>-hello.txt
-```
-
-And when the content is actually stored:
+When you write `nix build nixpkgs#hello`, here's what happens at the level pix operates:
 
 ```
-8. NAR: serialize "hello world" as a regular file in NAR format
+1. Nix evaluates the expression → produces a Derivation
 
-9. Daemon: send AddTextToStore(name="hello.txt", content="hello world")
-   over Unix socket to nix-daemon
+2. The derivation is serialized to ATerm and written as a .drv file
+   (derivation.py can parse this back)
 
-10. Daemon computes the same store path, writes NAR to store,
-    registers path info in the database
+3. Output paths in the .drv are computed via hashDerivationModulo:
+   - Hash the .drv with output paths blanked out
+   - Use that hash as the fingerprint for make_store_path
+   (derivation.py + store_path.py)
+
+4. The .drv is sent to the daemon via the Unix socket protocol
+   (daemon.py speaks this protocol)
+
+5. The daemon builds it:
+   - Realizes input sources (their store paths were computed
+     the same way, using NAR hashes — nar.py + store_path.py)
+   - Runs the builder
+   - Registers the output in the store database
+
+6. You can query the result via the daemon:
+   - is_valid_path, query_path_info
+   - The NAR hash and references are recorded
 ```
+
+Each step has a corresponding pix module. The code is short enough that you can trace the entire flow.

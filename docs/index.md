@@ -1,79 +1,63 @@
 # pix
 
-**Pure Python implementation of Nix store operations.**
+**Explore Nix internals through readable Python.**
 
-No FFI. Data formats (base32, NAR, `.drv`, store paths) are computed natively in Python. Store operations talk to the Nix daemon over its Unix socket.
+Nix's core algorithms — store path hashing, NAR serialization, derivation parsing, the daemon wire protocol — are buried in C++ across dozens of source files. pix re-derives each one in straightforward Python so you can read, modify, and single-step through the logic.
 
-## What pix does
+Every module produces output identical to the real `nix` CLI, verified by the test suite. The code is the documentation; these pages are the commentary.
 
-| Capability | How |
-|---|---|
-| Hash files and directories | NAR serialization + SHA-256, matching `nix hash path` |
-| Compute store paths | Fingerprint hashing, matching Nix exactly |
-| Parse `.drv` files | ATerm parser/serializer with full roundtrip |
-| Talk to the Nix daemon | Unix socket protocol client (no CLI wrapping) |
-| Add content to the store | Via daemon `add_text_to_store` |
-| Build derivations | Via daemon `build_paths` |
+## What's inside Nix
 
-## Quick start
+When you run `nix build`, a lot happens under the hood. pix breaks it into pieces you can understand one at a time:
+
+| Concept | What Nix does | pix module | Docs |
+|---------|--------------|------------|------|
+| **Base32** | Custom encoding for store path hashes — not RFC 4648 | [`base32.py`](api/base32.md) | [How it differs](internals/base32.md) |
+| **Hash compression** | XOR-folds SHA-256 (32 B) down to 160 bits (20 B) | [`hash.py`](api/hash.md) | [In store path computation](internals/store-paths.md) |
+| **NAR** | Deterministic archive format — no timestamps, no uid, just content | [`nar.py`](api/nar.md) | [Wire format spec](internals/nar-format.md) |
+| **Store paths** | `/nix/store/<hash>-<name>` computed from a fingerprint string | [`store_path.py`](api/store_path.md) | [Full algorithm](internals/store-paths.md) |
+| **Derivations** | `.drv` files in ATerm format; `hashDerivationModulo` breaks circular deps | [`derivation.py`](api/derivation.md) | [Format + hashing](internals/derivations.md) |
+| **Daemon protocol** | Unix socket with uint64-LE framing, stderr log stream, operation opcodes | [`daemon.py`](api/daemon.md) | [Protocol spec](internals/daemon-protocol.md) |
+
+## Reading order
+
+The modules build on each other. Start from the bottom:
+
+```
+1. base32.py        ← simplest: just an encoding
+2. hash.py          ← one function: XOR-fold
+3. nar.py           ← serialization format, uses hash
+4. store_path.py    ← the core algorithm, uses base32 + hash
+5. derivation.py    ← parsing + the hashDerivationModulo trick
+6. daemon.py        ← standalone: wire protocol over Unix socket
+```
+
+Each file is self-contained and under 150 lines. You can read the entire codebase in one sitting.
+
+## Try it yourself
 
 ```bash
-# Enter dev environment
 nix develop
 
-# Hash a file (same as nix hash path)
-python -m pix hash-path ./myfile.txt --base32
+# See that pix computes the exact same hash as nix
+python -m pix hash-path ./pix/base32.py --base32
+nix hash path ./pix/base32.py --type sha256 --base32
+# same output
 
-# Compute store path for a directory
-python -m pix store-path ./my-source --name my-source
-
-# Add text to the Nix store
+# Compute a store path, then verify via the daemon
+python -m pix store-path ./pix --name pix-source
 python -m pix add-text hello.txt "hello world"
-
-# Query store path info from daemon
-python -m pix path-info /nix/store/...-hello.txt
+python -m pix drv-show /nix/store/...-hello.drv
 ```
 
-## Use as a library
+## Verify
 
-```python
-from pix.store_path import make_text_store_path
-from pix.nar import nar_hash
-from pix.daemon import DaemonConnection
-
-# Compute a store path locally
-path = make_text_store_path("greeting.txt", b"hello world")
-
-# Or talk to the daemon
-with DaemonConnection() as conn:
-    path = conn.add_text_to_store("greeting.txt", "hello world")
-    info = conn.query_path_info(path)
+```bash
+pytest tests/ -v   # 28 tests, all comparing against real nix
 ```
 
-## Project structure
+## How to use these docs
 
-```
-pix/
-  base32.py           Nix base32 encode/decode
-  hash.py             SHA-256, XOR-fold compression
-  nar.py              NAR serialization + hashing
-  store_path.py       Store path computation
-  derivation.py       .drv ATerm parse/serialize
-  daemon.py           Nix daemon socket client
-  main.py             CLI
-tests/
-  test_base32.py      6 tests
-  test_nar.py         6 tests
-  test_store_path.py  5 tests
-  test_derivation.py  6 tests
-  test_daemon.py      5 tests (need running daemon)
-c/
-  main.cc             C++ reference (Nix C API)
-```
-
-## Requirements
-
-- Nix with flakes enabled
-- Python 3.12+
-- Running Nix daemon (for `daemon.py` and daemon CLI commands)
-- No pip dependencies — stdlib only
+- **[Internals](internals/index.md)** — Start here. Explains _how Nix works_ with diagrams, hex dumps, and protocol traces.
+- **[API Reference](api/index.md)** — Function signatures and usage examples for each module.
+- **[CLI Reference](cli.md)** — The `python -m pix` commands for quick experimentation.

@@ -1,7 +1,17 @@
 """Nix daemon Unix socket protocol client.
 
-Connects to the Nix daemon at /nix/var/nix/daemon-socket/socket and
-implements a subset of the worker protocol for store queries and builds.
+The Nix daemon (nix-daemon) manages the /nix/store and handles builds.
+All Nix CLI commands (nix build, nix-store, etc.) are just clients of
+this daemon. This module speaks the same binary protocol they use.
+
+The protocol is simple:
+  - Everything is uint64 little-endian on the wire
+  - Strings are length-prefixed and zero-padded to 8-byte boundaries
+    (same framing as the NAR format — see nar.py)
+  - Each request/response has a stderr log stream in between that must
+    be fully drained before reading the response
+
+See: nix/src/libstore/daemon.cc, nix/src/libstore/remote-store.cc
 """
 
 import os
@@ -9,26 +19,30 @@ import socket
 import struct
 from dataclasses import dataclass
 
-# Protocol constants
-WORKER_MAGIC_1 = 0x6E697863  # "nixc"
-WORKER_MAGIC_2 = 0x6478696F  # "dxio"
-PROTOCOL_VERSION = (1 << 8) | 37  # 1.37 — common in Nix 2.x
+# Handshake magic numbers — ASCII "nixc" and "dxio"
+WORKER_MAGIC_1 = 0x6E697863  # client sends this
+WORKER_MAGIC_2 = 0x6478696F  # daemon responds with this
 
-# Worker operations
+# Protocol version: (major << 8) | minor.  1.37 = 293.
+PROTOCOL_VERSION = (1 << 8) | 37
+
+# Worker opcodes (subset — Nix defines ~40 of these)
 WOP_IS_VALID_PATH = 1
-WOP_QUERY_PATH_INFO = 26
 WOP_ADD_TEXT_TO_STORE = 8
 WOP_BUILD_PATHS = 9
-WOP_ADD_TO_STORE_NAR = 39
+WOP_QUERY_PATH_INFO = 26
 WOP_QUERY_VALID_PATHS = 31
+WOP_ADD_TO_STORE_NAR = 39
 
-# Stderr message types from daemon
-STDERR_NEXT = 0x6F6C6D67   # log line
-STDERR_READ = 0x64617461   # read data (unused here)
-STDERR_WRITE = 0x64617416  # write data
-STDERR_LAST = 0x616C7473   # end of stderr
-STDERR_ERROR = 0x63787470  # error
-STDERR_START_ACTIVITY = 0x53545254
+# Between each request/response, the daemon sends a stream of stderr
+# messages. Each starts with one of these uint64 type codes.
+# You MUST drain all messages until STDERR_LAST before reading the response.
+STDERR_NEXT = 0x6F6C6D67          # log line follows (string)
+STDERR_READ = 0x64617461          # daemon wants data from us (unused here)
+STDERR_WRITE = 0x64617416         # daemon sending data to us
+STDERR_LAST = 0x616C7473          # end of stderr — response follows
+STDERR_ERROR = 0x63787470         # error — connection is dead after this
+STDERR_START_ACTIVITY = 0x53545254  # progress reporting
 STDERR_STOP_ACTIVITY = 0x53544F50
 STDERR_RESULT = 0x52534C54
 

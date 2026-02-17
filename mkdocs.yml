@@ -1,5 +1,5 @@
 site_name: pix
-site_description: Pure Python implementation of Nix store operations
+site_description: Explore Nix internals through readable Python
 repo_url: https://github.com/jhhuh/pix
 
 theme:
