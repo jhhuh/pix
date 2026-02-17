@@ -19,20 +19,40 @@ Nix의 핵심 알고리즘 — 스토어 경로 해싱, NAR 직렬화, derivatio
 | **Derivation** | ATerm 형식의 `.drv` 파일; `hashDerivationModulo`로 순환 의존성 해결 | [`derivation.py`](api/derivation.md) | [형식 + 해싱](internals/derivations.md) |
 | **데몬 프로토콜** | uint64-LE 프레이밍, stderr 로그 스트림, 오퍼레이션 옵코드를 사용하는 Unix 소켓 | [`daemon.py`](api/daemon.md) | [프로토콜 명세](internals/daemon-protocol.md) |
 
+## pixpkgs — pix 위에 쌓기
+
+내부 구조를 이해했다면, pixpkgs는 그 위에 nixpkgs 스타일의 패키지 세트를 구축하는 방법을 보여줍니다. Nix 패턴을 Python 관용구로 매핑합니다:
+
+| Nix 패턴 | Python 관용구 | pixpkgs 모듈 |
+|----------|-------------|-------------|
+| `mkDerivation` | `drv()` 함수 → `Package` 데이터클래스 | [`drv.py`](api/pixpkgs.md#drv) |
+| `callPackage` | `inspect.signature` + `getattr` | [`package_set.py`](api/pixpkgs.md#packageset) |
+| 문자열 보간 (`${pkg}`) | 출력 경로를 반환하는 `__str__` | [`drv.py`](api/pixpkgs.md#package) |
+| `pkg.override` | 병합된 kwargs로 `drv()` 재호출 | [`drv.py`](api/pixpkgs.md#packageoverride) |
+| `nix-store --realize` | `realize()` → 데몬 `add_text_to_store` + `build_paths` | [`realize.py`](api/pixpkgs.md#realize) |
+
+자세한 내용은 [pixpkgs API 레퍼런스](api/pixpkgs.md)를 참고하세요.
+
 ## 읽는 순서
 
 모듈들은 서로 의존합니다. 아래에서부터 시작하세요:
 
 ```
-1. base32.py        ← 가장 단순: 인코딩만
-2. hash.py          ← 함수 하나: XOR-폴드
-3. nar.py           ← 직렬화 형식, hash 사용
-4. store_path.py    ← 핵심 알고리즘, base32 + hash 사용
-5. derivation.py    ← 파싱 + hashDerivationModulo 트릭
-6. daemon.py        ← 독립적: Unix 소켓 와이어 프로토콜
+pix (Nix 내부 구조):
+  1. base32.py        ← 가장 단순: 인코딩만
+  2. hash.py          ← 함수 하나: XOR-폴드
+  3. nar.py           ← 직렬화 형식, hash 사용
+  4. store_path.py    ← 핵심 알고리즘, base32 + hash 사용
+  5. derivation.py    ← 파싱 + hashDerivationModulo 트릭
+  6. daemon.py        ← 독립적: Unix 소켓 와이어 프로토콜
+
+pixpkgs (패키지 세트 레이어, pix 사용):
+  7. drv.py           ← drv() + Package: mkDerivation 등가물
+  8. package_set.py   ← PackageSet.call(): callPackage 등가물
+  9. realize.py       ← .drv를 스토어에 쓰고 데몬으로 빌드
 ```
 
-각 파일은 자체적으로 완결되며 150줄 미만입니다. 전체 코드베이스를 한 번에 읽을 수 있습니다.
+각 pix 파일은 자체적으로 완결되며 150줄 미만입니다. 전체 코드베이스를 한 번에 읽을 수 있습니다.
 
 ## 직접 해보기
 
@@ -53,7 +73,7 @@ python -m pix drv-show /nix/store/...-hello.drv
 ## 검증
 
 ```bash
-pytest tests/ -v   # 28개 테스트, 모두 실제 nix와 비교
+pytest tests/ pixpkgs/tests/ -v   # 41개 테스트, 모두 실제 nix와 비교
 ```
 
 ## 이 문서 사용법

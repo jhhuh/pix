@@ -19,20 +19,40 @@ When you run `nix build`, a lot happens under the hood. pix breaks it into piece
 | **Derivations** | `.drv` files in ATerm format; `hashDerivationModulo` breaks circular deps | [`derivation.py`](api/derivation.md) | [Format + hashing](internals/derivations.md) |
 | **Daemon protocol** | Unix socket with uint64-LE framing, stderr log stream, operation opcodes | [`daemon.py`](api/daemon.md) | [Protocol spec](internals/daemon-protocol.md) |
 
+## pixpkgs — building on pix
+
+Once you understand the internals, pixpkgs shows how to build a nixpkgs-like package set on top of them, mapping Nix patterns to Python idioms:
+
+| Nix pattern | Python idiom | pixpkgs module |
+|-------------|-------------|----------------|
+| `mkDerivation` | `drv()` function → `Package` dataclass | [`drv.py`](api/pixpkgs.md#drv) |
+| `callPackage` | `inspect.signature` + `getattr` | [`package_set.py`](api/pixpkgs.md#packageset) |
+| String interpolation (`${pkg}`) | `__str__` returning output path | [`drv.py`](api/pixpkgs.md#package) |
+| `pkg.override` | Re-call `drv()` with merged kwargs | [`drv.py`](api/pixpkgs.md#packageoverride) |
+| `nix-store --realize` | `realize()` → daemon `add_text_to_store` + `build_paths` | [`realize.py`](api/pixpkgs.md#realize) |
+
+See the [pixpkgs API reference](api/pixpkgs.md) for details.
+
 ## Reading order
 
 The modules build on each other. Start from the bottom:
 
 ```
-1. base32.py        ← simplest: just an encoding
-2. hash.py          ← one function: XOR-fold
-3. nar.py           ← serialization format, uses hash
-4. store_path.py    ← the core algorithm, uses base32 + hash
-5. derivation.py    ← parsing + the hashDerivationModulo trick
-6. daemon.py        ← standalone: wire protocol over Unix socket
+pix (Nix internals):
+  1. base32.py        ← simplest: just an encoding
+  2. hash.py          ← one function: XOR-fold
+  3. nar.py           ← serialization format, uses hash
+  4. store_path.py    ← the core algorithm, uses base32 + hash
+  5. derivation.py    ← parsing + the hashDerivationModulo trick
+  6. daemon.py        ← standalone: wire protocol over Unix socket
+
+pixpkgs (package set layer, uses pix):
+  7. drv.py           ← drv() + Package: the mkDerivation equivalent
+  8. package_set.py   ← PackageSet.call(): the callPackage equivalent
+  9. realize.py       ← write .drv to store + build via daemon
 ```
 
-Each file is self-contained and under 150 lines. You can read the entire codebase in one sitting.
+Each pix file is self-contained and under 150 lines. You can read the entire codebase in one sitting.
 
 ## Try it yourself
 
@@ -53,7 +73,7 @@ python -m pix drv-show /nix/store/...-hello.drv
 ## Verify
 
 ```bash
-pytest tests/ -v   # 28 tests, all comparing against real nix
+pytest tests/ pixpkgs/tests/ -v   # 41 tests, all comparing against real nix
 ```
 
 ## How to use these docs

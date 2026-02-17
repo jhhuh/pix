@@ -120,3 +120,9 @@ Append-only log of what was attempted, what failed, what worked, and why.
 
 - Updated CLAUDE.md with pixpkgs architecture and new gotchas.
 - Commit — "Update CLAUDE.md with pixpkgs architecture and new gotchas".
+
+## 2026-02-17 ~07:21 — Docs deployment & verification
+
+- Updated all docs (EN+KO) to cover pixpkgs and maskOutputs explanation.
+- Verified deployed docs via WebFetch (7 pages checked, all correct).
+- Commit — "Update docs to cover pixpkgs and maskOutputs two-mode explanation".
