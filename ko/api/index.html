@@ -343,6 +343,8 @@
       
         
       
+        
+      
     
     
       
@@ -503,6 +505,27 @@
   
   <span class="md-ellipsis">
     pix.daemon
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="pixpkgs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pixpkgs
   </span>
   
 
@@ -761,21 +784,54 @@
 </tr>
 </tbody>
 </table>
+<h2 id="pixpkgs">pixpkgs 모듈<a class="headerlink" href="#pixpkgs" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>모듈</th>
+<th>줄 수</th>
+<th>구현 내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="pixpkgs/#drv"><code>pixpkgs.drv</code></a></td>
+<td>~140</td>
+<td><code>drv()</code> 생성자 + <code>Package</code> 데이터클래스 — <code>mkDerivation</code> 등가물</td>
+</tr>
+<tr>
+<td><a href="pixpkgs/#packageset"><code>pixpkgs.package_set</code></a></td>
+<td>~30</td>
+<td><code>call()</code>을 가진 <code>PackageSet</code> — <code>callPackage</code> 등가물</td>
+</tr>
+<tr>
+<td><a href="pixpkgs/#realize"><code>pixpkgs.realize</code></a></td>
+<td>~30</td>
+<td><code>.drv</code>를 스토어에 쓰고 데몬으로 빌드</td>
+</tr>
+</tbody>
+</table>
 <h2 id="_2">의존성 그래프<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>daemon  (독립적 — 와이어 프로토콜만)
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>store_path ─── hash
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    │            │
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    └── base32   │
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                 │
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>nar ─────────────┘
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pixpkgs
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  drv ─────────── derivation + store_path
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  package_set     (독립적 — inspect만 사용)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  realize ──────── daemon
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>pix
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  daemon  (독립적 — 와이어 프로토콜만)
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>derivation ─── hash
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  store_path ─── hash
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>      │            │
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>      └── base32   │
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>                   │
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>  nar ─────────────┘
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>  derivation ─── hash
 </code></pre></div>
 <p>순환 의존성 없음. <code>daemon</code>은 완전히 독립적입니다 — 로컬 해시 계산 없이 바이너리 프로토콜을 직접 사용합니다.</p>
 <h2 id="_3">코드 읽기<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <p>모듈들은 위에서 아래로 읽도록 설계되어 있습니다. 각 파일은 형식이나 프로토콜을 설명하는 docstring으로 시작한 다음, 가장 직관적인 방식으로 구현합니다.</p>
-<p>알고리즘이 <em>왜</em> 그런 방식으로 동작하는지 이해하려면 <a href="../internals/">내부 구조</a> 섹션을 참고하세요. <em>어떻게</em> 구현되어 있는지 보려면 소스를 직접 읽으세요 — 전부 <code>pix/</code>에 있습니다.</p>
+<p>알고리즘이 <em>왜</em> 그런 방식으로 동작하는지 이해하려면 <a href="../internals/">내부 구조</a> 섹션을 참고하세요. <em>어떻게</em> 구현되어 있는지 보려면 소스를 직접 읽으세요 — 전부 <code>pix/</code>와 <code>pixpkgs/</code>에 있습니다.</p>
 
 
 

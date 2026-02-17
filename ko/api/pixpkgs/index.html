@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://jhhuh.github.io/pix/ko/api/derivation/">
+        <link rel="canonical" href="https://jhhuh.github.io/pix/ko/api/pixpkgs/">
       
       
-        <link rel="prev" href="../store_path/">
+        <link rel="prev" href="../daemon/">
       
       
-        <link rel="next" href="../daemon/">
+        <link rel="next" href="../../internals/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -24,7 +24,7 @@
     
     
       
-        <title>pix.derivation - pix</title>
+        <title>pixpkgs - pix</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#pixderivation" class="md-skip">
+        <a href="#pixpkgs" class="md-skip">
           콘텐츠로 이동
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              pix.derivation
+              pixpkgs
             
           </span>
         </div>
@@ -476,30 +476,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    pix.derivation
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../derivation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -508,110 +488,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="목차">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      목차
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      데이터 클래스
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="데이터 클래스">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#derivationoutput" class="md-nav__link">
-    <span class="md-ellipsis">
-      DerivationOutput
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#derivation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Derivation
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      함수
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="함수">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#parsedrv_text-str-derivation" class="md-nav__link">
-    <span class="md-ellipsis">
-      parse(drv_text: str) -&gt; Derivation
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#serializedrv-derivation-str" class="md-nav__link">
-    <span class="md-ellipsis">
-      serialize(drv: Derivation) -&gt; str
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#hash_derivation_modulodrv-derivation-drv_hashes-dictstr-bytes-none-none-bytes" class="md-nav__link">
-    <span class="md-ellipsis">
-      hash_derivation_modulo(drv: Derivation, drv_hashes: dict[str, bytes] | None = None) -&gt; bytes
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#derivation_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      예제: 전체 derivation 검사
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -642,10 +518,30 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../pixpkgs/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    pixpkgs
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -654,6 +550,167 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="목차">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      목차
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#drv" class="md-nav__link">
+    <span class="md-ellipsis">
+      drv()
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="drv()">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      시그니처
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      매개변수
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      파이프라인
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#package" class="md-nav__link">
+    <span class="md-ellipsis">
+      Package
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Package">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      속성
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#packageout" class="md-nav__link">
+    <span class="md-ellipsis">
+      Package.out
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#package__str__" class="md-nav__link">
+    <span class="md-ellipsis">
+      Package.__str__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#packageoverride" class="md-nav__link">
+    <span class="md-ellipsis">
+      Package.override()
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#packageset" class="md-nav__link">
+    <span class="md-ellipsis">
+      PackageSet
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PackageSet">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#packagesetcallfn" class="md-nav__link">
+    <span class="md-ellipsis">
+      PackageSet.call(fn)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#realize" class="md-nav__link">
+    <span class="md-ellipsis">
+      realize()
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="realize()">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      시그니처
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -864,94 +921,186 @@
   
 
 
-<h1 id="pixderivation">pix.derivation<a class="headerlink" href="#pixderivation" title="Permanent link">&para;</a></h1>
-<p>Nix <code>.drv</code> 파일 (ATerm 형식) 파싱 및 직렬화, 출력 경로 계산을 위한 derivation 해시 계산.</p>
-<p>ATerm 형식 명세는 <a href="../../internals/derivations/">내부 구조: Derivation</a>을 참고하세요.</p>
-<h2 id="_1">데이터 클래스<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
-<h3 id="derivationoutput"><code>DerivationOutput</code><a class="headerlink" href="#derivationoutput" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nd">@dataclass</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">class</span> <span class="nc">DerivationOutput</span><span class="p">:</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span>        <span class="c1"># 출력 스토어 경로 (content-addressed의 경우 비어있음)</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">hash_algo</span><span class="p">:</span> <span class="nb">str</span>   <span class="c1"># 일반 출력은 &quot;&quot;, fixed-output은 &quot;sha256&quot; 등</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">hash_value</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># 일반 출력은 &quot;&quot;, fixed-output은 16진수 해시</span>
+<h1 id="pixpkgs">pixpkgs<a class="headerlink" href="#pixpkgs" title="Permanent link">&para;</a></h1>
+<p>pix의 저수준 프리미티브 위에 구축된 nixpkgs 스타일 패키지 세트. Nix 패턴을 Python 관용구로 매핑합니다.</p>
+<h2 id="drv"><code>drv()</code><a class="headerlink" href="#drv" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">pixpkgs</span> <span class="kn">import</span> <span class="n">drv</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">pkg</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;hello&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">builder</span><span class="o">=</span><span class="s2">&quot;/bin/sh&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;echo hello &gt; $out&quot;</span><span class="p">],</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span>
 </code></pre></div>
-<h3 id="derivation"><code>Derivation</code><a class="headerlink" href="#derivation" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nd">@dataclass</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">class</span> <span class="nc">Derivation</span><span class="p">:</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">outputs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DerivationOutput</span><span class="p">]</span>     <span class="c1"># &quot;out&quot; -&gt; DerivationOutput(...)</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">input_drvs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>         <span class="c1"># drv_path -&gt; [&quot;out&quot;, ...]</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">input_srcs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>                    <span class="c1"># 소스 스토어 경로</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">platform</span><span class="p">:</span> <span class="nb">str</span>                            <span class="c1"># &quot;x86_64-linux&quot;</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">builder</span><span class="p">:</span> <span class="nb">str</span>                             <span class="c1"># &quot;/nix/store/...-bash/bin/bash&quot;</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>                          <span class="c1"># 빌더 인자</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">env</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>                      <span class="c1"># 환경 변수</span>
+<h3 id="_1">시그니처<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">def</span> <span class="nf">drv</span><span class="p">(</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">builder</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">system</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;x86_64-linux&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">env</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">output_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">deps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Package</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">srcs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Package</span>
 </code></pre></div>
-<h2 id="_2">함수<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<h3 id="parsedrv_text-str-derivation"><code>parse(drv_text: str) -&gt; Derivation</code><a class="headerlink" href="#parsedrv_text-str-derivation" title="Permanent link">&para;</a></h3>
-<p>ATerm <code>.drv</code> 파일을 <code>Derivation</code>으로 파싱합니다.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span> <span class="nn">pix.derivation</span> <span class="kn">import</span> <span class="n">parse</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">drv</span> <span class="o">=</span> <span class="n">parse</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/nix/store/...-hello-2.12.2.drv&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">drv</span><span class="o">.</span><span class="n">platform</span>       <span class="c1"># &#39;x86_64-linux&#39;</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">drv</span><span class="o">.</span><span class="n">builder</span>         <span class="c1"># &#39;/nix/store/...-bash/bin/bash&#39;</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">drv</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>  <span class="c1"># dict_keys([&#39;out&#39;])</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="n">drv</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>     <span class="c1"># &#39;hello&#39;</span>
+<h3 id="_2">매개변수<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>매개변수</th>
+<th>기본값</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>—</td>
+<td>패키지 이름 (스토어 경로 접미사가 됨)</td>
+</tr>
+<tr>
+<td><code>builder</code></td>
+<td>—</td>
+<td>빌더 실행 파일 경로</td>
+</tr>
+<tr>
+<td><code>system</code></td>
+<td><code>"x86_64-linux"</code></td>
+<td>빌드 플랫폼</td>
+</tr>
+<tr>
+<td><code>args</code></td>
+<td><code>[]</code></td>
+<td>빌더 인자</td>
+</tr>
+<tr>
+<td><code>env</code></td>
+<td><code>{}</code></td>
+<td>추가 환경 변수</td>
+</tr>
+<tr>
+<td><code>output_names</code></td>
+<td><code>["out"]</code></td>
+<td>출력 이름</td>
+</tr>
+<tr>
+<td><code>deps</code></td>
+<td><code>[]</code></td>
+<td>패키지 의존성 (<code>inputDrvs</code>로 추가됨)</td>
+</tr>
+<tr>
+<td><code>srcs</code></td>
+<td><code>[]</code></td>
+<td>입력 소스 스토어 경로</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_3">파이프라인<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p><code>drv()</code>는 내부적으로 전체 6단계 derivation 파이프라인을 실행합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>1. 빈 출력 경로로 Derivation 생성
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>2. 입력 derivation 해시 수집 (mask_outputs=False)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>3. hashDerivationModulo (자신에 대해 mask_outputs=True)
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>4. make_output_path → 출력 경로를 .outputs와 .env에 채움
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>5. ATerm으로 직렬화
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>6. make_text_store_path → .drv 스토어 경로 계산
 </code></pre></div>
-<p>문자열의 이스케이프 시퀀스를 처리합니다: <code>\\</code>, <code>\"</code>, <code>\n</code>, <code>\r</code>, <code>\t</code>.</p>
-<hr />
-<h3 id="serializedrv-derivation-str"><code>serialize(drv: Derivation) -&gt; str</code><a class="headerlink" href="#serializedrv-derivation-str" title="Permanent link">&para;</a></h3>
-<p><code>Derivation</code>을 ATerm <code>.drv</code> 형식으로 직렬화합니다.</p>
-<p>출력은 결정론적입니다:</p>
-<ul>
-<li>출력은 이름순 정렬</li>
-<li>입력 derivation은 경로순 정렬</li>
-<li>입력 소스는 정렬됨</li>
-<li>환경 변수는 키순 정렬</li>
-<li>문자열은 적절히 이스케이프</li>
-</ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span> <span class="nn">pix.derivation</span> <span class="kn">import</span> <span class="n">parse</span><span class="p">,</span> <span class="n">serialize</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">text</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/nix/store/...-hello.drv&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">drv</span> <span class="o">=</span> <span class="n">parse</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">assert</span> <span class="n">parse</span><span class="p">(</span><span class="n">serialize</span><span class="p">(</span><span class="n">drv</span><span class="p">))</span> <span class="o">==</span> <span class="n">drv</span>  <span class="c1"># 왕복 변환</span>
+<p>Nix의 <code>derivation</code> 내장 함수가 하는 것과 동일하게 표준 환경 변수(<code>name</code>, <code>builder</code>, <code>system</code>, 출력 이름)가 자동으로 추가됩니다.</p>
+<h2 id="package"><code>Package</code><a class="headerlink" href="#package" title="Permanent link">&para;</a></h2>
+<p><code>drv()</code>가 반환하는 불변(frozen) 데이터클래스입니다.</p>
+<h3 id="_4">속성<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>속성</th>
+<th>타입</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>패키지 이름</td>
+</tr>
+<tr>
+<td><code>drv</code></td>
+<td><code>Derivation</code></td>
+<td>기반 pix Derivation 객체</td>
+</tr>
+<tr>
+<td><code>drv_path</code></td>
+<td><code>str</code></td>
+<td><code>.drv</code> 파일의 스토어 경로</td>
+</tr>
+<tr>
+<td><code>outputs</code></td>
+<td><code>dict[str, str]</code></td>
+<td>출력 이름 → 스토어 경로 매핑</td>
+</tr>
+</tbody>
+</table>
+<h3 id="packageout"><code>Package.out</code><a class="headerlink" href="#packageout" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">pkg</span><span class="o">.</span><span class="n">out</span>  <span class="c1"># &quot;/nix/store/&lt;hash&gt;-hello&quot;</span>
 </code></pre></div>
-<hr />
-<h3 id="hash_derivation_modulodrv-derivation-drv_hashes-dictstr-bytes-none-none-bytes"><code>hash_derivation_modulo(drv: Derivation, drv_hashes: dict[str, bytes] | None = None) -&gt; bytes</code><a class="headerlink" href="#hash_derivation_modulodrv-derivation-drv_hashes-dictstr-bytes-none-none-bytes" title="Permanent link">&para;</a></h3>
-<p>출력 경로 계산에 사용되는 derivation의 모듈러 해시를 계산합니다.</p>
-<p><strong>고정 출력 derivation</strong> (단일 출력 <code>"out"</code>에 <code>hash_algo</code>가 설정된 경우):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>sha256(&quot;fixed:out:&lt;hash_algo&gt;:&lt;hash_value&gt;:&quot;)
+<p><code>pkg.outputs["out"]</code>의 단축 — 기본 출력 경로입니다.</p>
+<h3 id="package__str__"><code>Package.__str__</code><a class="headerlink" href="#package__str__" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="sa">f</span><span class="s2">&quot;echo </span><span class="si">{</span><span class="n">pkg</span><span class="si">}</span><span class="s2"> &gt; $out&quot;</span>  <span class="c1"># 출력 경로가 삽입됨</span>
 </code></pre></div>
-<p><strong>일반 derivation</strong>: 출력 경로를 비우고 입력 derivation 경로를 모듈러 해시로 대체한 마스크 복사본을 만든 다음, 결과 ATerm을 해싱합니다.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span> <span class="nn">pix.derivation</span> <span class="kn">import</span> <span class="n">parse</span><span class="p">,</span> <span class="n">hash_derivation_modulo</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">drv</span> <span class="o">=</span> <span class="n">parse</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;some.drv&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># 고정 출력의 경우:</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">h</span> <span class="o">=</span> <span class="n">hash_derivation_modulo</span><span class="p">(</span><span class="n">drv</span><span class="p">)</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1"># 일반 derivation의 경우, 입력 drv 해시를 제공:</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">h</span> <span class="o">=</span> <span class="n">hash_derivation_modulo</span><span class="p">(</span><span class="n">drv</span><span class="p">,</span> <span class="n">drv_hashes</span><span class="o">=</span><span class="p">{</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    <span class="s2">&quot;/nix/store/...-dep.drv&quot;</span><span class="p">:</span> <span class="n">dep_hash</span><span class="p">,</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="p">})</span>
+<p><code>pkg.out</code>을 반환합니다. Nix의 문자열 보간 컨텍스트를 반영합니다 — Nix에서 <code>${pkg}</code>를 사용하면 패키지의 기본 출력 경로를 얻습니다.</p>
+<h3 id="packageoverride"><code>Package.override()</code><a class="headerlink" href="#packageoverride" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">pkg2</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">override</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;hello-custom&quot;</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;CFLAGS&quot;</span><span class="p">:</span> <span class="s2">&quot;-O2&quot;</span><span class="p">})</span>
 </code></pre></div>
-<div class="admonition warning">
-<p class="admonition-title">주의</p>
-<p>일반 (비고정 출력) derivation의 경우, <code>drv_hashes</code> 매개변수를 통해 모든 입력 derivation의 모듈러 해시를 제공해야 합니다. 누락된 해시는 <code>ValueError</code>를 발생시킵니다.</p>
-</div>
-<h2 id="derivation_1">예제: 전체 derivation 검사<a class="headerlink" href="#derivation_1" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span> <span class="nn">pix.derivation</span> <span class="kn">import</span> <span class="n">parse</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">import</span> <span class="nn">json</span>
+<p>변경된 인자로 패키지를 재생성합니다. Nix의 <code>pkg.override</code>와 같습니다 — 새로운 derivation 해시를 가진 새 Package를 생성합니다.</p>
+<h2 id="packageset"><code>PackageSet</code><a class="headerlink" href="#packageset" title="Permanent link">&para;</a></h2>
+<p>자동 의존성 주입을 사용하여 상호 의존적인 패키지 세트를 정의하는 기본 클래스입니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span> <span class="nn">pixpkgs</span> <span class="kn">import</span> <span class="n">drv</span><span class="p">,</span> <span class="n">PackageSet</span><span class="p">,</span> <span class="n">realize</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">cached_property</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">drv</span> <span class="o">=</span> <span class="n">parse</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/nix/store/...-hello-2.12.2.drv&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;패키지: </span><span class="si">{</span><span class="n">drv</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pname&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">drv</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;?&#39;</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;버전: </span><span class="si">{</span><span class="n">drv</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;version&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;?&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;시스템: </span><span class="si">{</span><span class="n">drv</span><span class="o">.</span><span class="n">platform</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;빌더: </span><span class="si">{</span><span class="n">drv</span><span class="o">.</span><span class="n">builder</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;출력: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">drv</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;의존성: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">drv</span><span class="o">.</span><span class="n">input_drvs</span><span class="p">)</span><span class="si">}</span><span class="s2">개 derivation, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">drv</span><span class="o">.</span><span class="n">input_srcs</span><span class="p">)</span><span class="si">}</span><span class="s2">개 소스&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">class</span> <span class="nc">MyPkgs</span><span class="p">(</span><span class="n">PackageSet</span><span class="p">):</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="k">def</span> <span class="nf">greeting</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>        <span class="k">return</span> <span class="n">drv</span><span class="p">(</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;greeting&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>            <span class="n">builder</span><span class="o">=</span><span class="s2">&quot;/bin/sh&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>            <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;echo hello &gt; $out&quot;</span><span class="p">],</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>        <span class="p">)</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>    <span class="k">def</span> <span class="nf">shouter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="k">lambda</span> <span class="n">greeting</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;shouter&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>            <span class="n">builder</span><span class="o">=</span><span class="s2">&quot;/bin/sh&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>            <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;read line &lt; </span><span class="si">{</span><span class="n">greeting</span><span class="si">}</span><span class="s2">; echo $line! &gt; $out&quot;</span><span class="p">],</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>            <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="n">greeting</span><span class="p">],</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>        <span class="p">))</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="n">pkgs</span> <span class="o">=</span> <span class="n">MyPkgs</span><span class="p">()</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="n">realize</span><span class="p">(</span><span class="n">pkgs</span><span class="o">.</span><span class="n">shouter</span><span class="p">)</span>  <span class="c1"># greeting을 먼저 빌드한 다음 shouter 빌드</span>
 </code></pre></div>
+<h3 id="packagesetcallfn"><code>PackageSet.call(fn)</code><a class="headerlink" href="#packagesetcallfn" title="Permanent link">&para;</a></h3>
+<p><code>fn</code>의 매개변수 이름을 검사하여 <code>self</code>의 속성으로 조회합니다. Nix의 <code>callPackage</code> 패턴의 Python 등가물입니다 — 의존성이 명시적으로 전달되는 대신 이름으로 주입됩니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># 다음 두 표현은 동일합니다:</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">pkgs</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="k">lambda</span> <span class="n">greeting</span><span class="p">:</span> <span class="n">use</span><span class="p">(</span><span class="n">greeting</span><span class="p">))</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">use</span><span class="p">(</span><span class="n">pkgs</span><span class="o">.</span><span class="n">greeting</span><span class="p">)</span>
+</code></pre></div>
+<p><code>@cached_property</code>와 결합하면 지연 평가를 제공합니다 — 패키지는 처음 접근할 때만 생성되고 이후 메모이제이션됩니다.</p>
+<h2 id="realize"><code>realize()</code><a class="headerlink" href="#realize" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span> <span class="nn">pixpkgs</span> <span class="kn">import</span> <span class="n">realize</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">output_path</span> <span class="o">=</span> <span class="n">realize</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># &quot;/nix/store/&lt;hash&gt;-hello&quot;</span>
+</code></pre></div>
+<h3 id="_5">시그니처<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">def</span> <span class="nf">realize</span><span class="p">(</span><span class="n">pkg</span><span class="p">:</span> <span class="n">Package</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">DaemonConnection</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</code></pre></div>
+<p>Nix 데몬을 통해 패키지를 빌드합니다:</p>
+<ol>
+<li>모든 의존성 <code>.drv</code> 파일을 <code>add_text_to_store</code>를 통해 스토어에 재귀적으로 등록</li>
+<li><code>build_paths</code>를 호출하여 패키지 빌드</li>
+<li>기본 출력 경로를 반환</li>
+</ol>
+<p><code>conn</code>이 제공되지 않으면 <code>DaemonConnection</code>을 자동으로 열고 닫습니다.</p>
 
 
 

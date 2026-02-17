@@ -334,6 +334,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pixpkgs-building-on-pix" class="md-nav__link">
+    <span class="md-ellipsis">
+      pixpkgs — building on pix
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#reading-order" class="md-nav__link">
     <span class="md-ellipsis">
       Reading order
@@ -408,6 +417,8 @@
       
         
           
+        
+      
         
       
         
@@ -584,6 +595,27 @@
   
   <span class="md-ellipsis">
     pix.daemon
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/pixpkgs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pixpkgs
   </span>
   
 
@@ -852,16 +884,61 @@
 </tr>
 </tbody>
 </table>
+<h2 id="pixpkgs-building-on-pix">pixpkgs — building on pix<a class="headerlink" href="#pixpkgs-building-on-pix" title="Permanent link">&para;</a></h2>
+<p>Once you understand the internals, pixpkgs shows how to build a nixpkgs-like package set on top of them, mapping Nix patterns to Python idioms:</p>
+<table>
+<thead>
+<tr>
+<th>Nix pattern</th>
+<th>Python idiom</th>
+<th>pixpkgs module</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mkDerivation</code></td>
+<td><code>drv()</code> function → <code>Package</code> dataclass</td>
+<td><a href="api/pixpkgs/#drv"><code>drv.py</code></a></td>
+</tr>
+<tr>
+<td><code>callPackage</code></td>
+<td><code>inspect.signature</code> + <code>getattr</code></td>
+<td><a href="api/pixpkgs/#packageset"><code>package_set.py</code></a></td>
+</tr>
+<tr>
+<td>String interpolation (<code>${pkg}</code>)</td>
+<td><code>__str__</code> returning output path</td>
+<td><a href="api/pixpkgs/#package"><code>drv.py</code></a></td>
+</tr>
+<tr>
+<td><code>pkg.override</code></td>
+<td>Re-call <code>drv()</code> with merged kwargs</td>
+<td><a href="api/pixpkgs/#packageoverride"><code>drv.py</code></a></td>
+</tr>
+<tr>
+<td><code>nix-store --realize</code></td>
+<td><code>realize()</code> → daemon <code>add_text_to_store</code> + <code>build_paths</code></td>
+<td><a href="api/pixpkgs/#realize"><code>realize.py</code></a></td>
+</tr>
+</tbody>
+</table>
+<p>See the <a href="api/pixpkgs/">pixpkgs API reference</a> for details.</p>
 <h2 id="reading-order">Reading order<a class="headerlink" href="#reading-order" title="Permanent link">&para;</a></h2>
 <p>The modules build on each other. Start from the bottom:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>1. base32.py        ← simplest: just an encoding
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>2. hash.py          ← one function: XOR-fold
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>3. nar.py           ← serialization format, uses hash
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>4. store_path.py    ← the core algorithm, uses base32 + hash
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>5. derivation.py    ← parsing + the hashDerivationModulo trick
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>6. daemon.py        ← standalone: wire protocol over Unix socket
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pix (Nix internals):
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  1. base32.py        ← simplest: just an encoding
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  2. hash.py          ← one function: XOR-fold
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  3. nar.py           ← serialization format, uses hash
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  4. store_path.py    ← the core algorithm, uses base32 + hash
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  5. derivation.py    ← parsing + the hashDerivationModulo trick
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  6. daemon.py        ← standalone: wire protocol over Unix socket
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>pixpkgs (package set layer, uses pix):
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>  7. drv.py           ← drv() + Package: the mkDerivation equivalent
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>  8. package_set.py   ← PackageSet.call(): the callPackage equivalent
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>  9. realize.py       ← write .drv to store + build via daemon
 </code></pre></div>
-<p>Each file is self-contained and under 150 lines. You can read the entire codebase in one sitting.</p>
+<p>Each pix file is self-contained and under 150 lines. You can read the entire codebase in one sitting.</p>
 <h2 id="try-it-yourself">Try it yourself<a class="headerlink" href="#try-it-yourself" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>nix<span class="w"> </span>develop
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
@@ -876,7 +953,7 @@
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>drv-show<span class="w"> </span>/nix/store/...-hello.drv
 </code></pre></div>
 <h2 id="verify">Verify<a class="headerlink" href="#verify" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>-v<span class="w">   </span><span class="c1"># 28 tests, all comparing against real nix</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>pixpkgs/tests/<span class="w"> </span>-v<span class="w">   </span><span class="c1"># 41 tests, all comparing against real nix</span>
 </code></pre></div>
 <h2 id="how-to-use-these-docs">How to use these docs<a class="headerlink" href="#how-to-use-these-docs" title="Permanent link">&para;</a></h2>
 <ul>

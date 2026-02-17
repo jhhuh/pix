@@ -339,6 +339,8 @@
       
         
       
+        
+      
     
     
       
@@ -501,6 +503,27 @@
   
   <span class="md-ellipsis">
     pix.daemon
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/pixpkgs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pixpkgs
   </span>
   
 
@@ -780,6 +803,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#two-modes-maskoutputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Two modes: maskOutputs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#computing-output-paths" class="md-nav__link">
     <span class="md-ellipsis">
       Computing output paths
@@ -1013,7 +1045,7 @@
 <h3 id="regular-derivations">Regular derivations<a class="headerlink" href="#regular-derivations" title="Permanent link">&para;</a></h3>
 <p>For all other derivations:</p>
 <ol>
-<li><strong>Blank output paths</strong>: Replace all output paths with <code>""</code></li>
+<li><strong>Optionally blank output paths</strong>: Replace output paths with <code>""</code> in both <code>.outputs</code> and <code>.env</code> (see <a href="#two-modes-maskoutputs">two modes</a> below)</li>
 <li><strong>Replace input drv paths</strong>: For each input derivation, replace the <code>.drv</code> path with the hex-encoded <code>hashDerivationModulo</code> of that input</li>
 <li><strong>Serialize</strong>: Convert the masked derivation back to ATerm</li>
 <li><strong>Hash</strong>: <code>sha256(serialized_masked_drv)</code></li>
@@ -1045,30 +1077,75 @@
 <a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>                   v
 <a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>           derivation hash (32 bytes)
 </code></pre></div>
+<h3 id="two-modes-maskoutputs">Two modes: <code>maskOutputs</code><a class="headerlink" href="#two-modes-maskoutputs" title="Permanent link">&para;</a></h3>
+<p><code>hashDerivationModulo</code> takes a <code>maskOutputs</code> parameter that controls whether output paths are blanked. Nix uses two different call sites:</p>
+<table>
+<thead>
+<tr>
+<th>Call site</th>
+<th style="text-align: center;"><code>maskOutputs</code></th>
+<th style="text-align: center;">Output paths</th>
+<th>Used for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>staticOutputHashes</code></td>
+<td style="text-align: center;"><code>true</code></td>
+<td style="text-align: center;">blanked (<code>""</code>)</td>
+<td>Computing a derivation's <strong>own</strong> output paths</td>
+</tr>
+<tr>
+<td><code>pathDerivationModulo</code></td>
+<td style="text-align: center;"><code>false</code></td>
+<td style="text-align: center;"><strong>kept</strong></td>
+<td>Computing the hash of an <strong>input</strong> derivation</td>
+</tr>
+</tbody>
+</table>
+<p>This distinction matters: when derivation A depends on derivation B, Nix computes B's hash with <code>maskOutputs=false</code> — B's filled output paths are part of the hash used as A's <code>inputDrvs</code> key. Only A's own outputs are blanked (to break A's circularity).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Computing output path for consumer.drv:
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>  dep.drv (input)                consumer.drv (self)
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>  ─────────────                  ───────────────────
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>  maskOutputs = false            maskOutputs = true
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>  output paths KEPT              output paths BLANKED
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>         │                              │
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>         v                              v
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    dep_hash (includes             consumer_hash
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    dep&#39;s output path)                  │
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>         │                              v
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>         └──── used as ──────&gt; inputDrvs key
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>                               in consumer&#39;s masked ATerm
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Common pitfall</p>
+<p>Using <code>maskOutputs=true</code> for input derivations produces the wrong hash — the input's output path is lost, changing the consumer's <code>inputDrvs</code> key and ultimately its output path. This is the difference between <code>staticOutputHashes</code> (for self) and <code>pathDerivationModulo</code> (for inputs).</p>
+</div>
 <h3 id="computing-output-paths">Computing output paths<a class="headerlink" href="#computing-output-paths" title="Permanent link">&para;</a></h3>
 <p>Once you have the derivation hash from <code>hashDerivationModulo</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span> <span class="nn">pix.store_path</span> <span class="kn">import</span> <span class="n">make_output_path</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">output_path</span> <span class="o">=</span> <span class="n">make_output_path</span><span class="p">(</span><span class="n">drv_hash</span><span class="p">,</span> <span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;hello-2.12.2&quot;</span><span class="p">)</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># /nix/store/&lt;hash&gt;-hello-2.12.2</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span> <span class="nn">pix.store_path</span> <span class="kn">import</span> <span class="n">make_output_path</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">output_path</span> <span class="o">=</span> <span class="n">make_output_path</span><span class="p">(</span><span class="n">drv_hash</span><span class="p">,</span> <span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;hello-2.12.2&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># /nix/store/&lt;hash&gt;-hello-2.12.2</span>
 </code></pre></div>
 <p>The type prefix is <code>output:&lt;output-name&gt;</code>, so the fingerprint becomes:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>output:out:sha256:&lt;hex(drv_hash)&gt;:/nix/store:hello-2.12.2
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>output:out:sha256:&lt;hex(drv_hash)&gt;:/nix/store:hello-2.12.2
 </code></pre></div>
 <h2 id="real-world-example">Real-world example<a class="headerlink" href="#real-world-example" title="Permanent link">&para;</a></h2>
 <p>A minimal derivation (<code>builtins.derivation { name = "hello"; builder = "/bin/sh"; args = ["-c" "echo hello &gt; $out"]; system = "x86_64-linux"; }</code>):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Derive(
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  [(&quot;out&quot;,&quot;/nix/store/...-hello&quot;,&quot;&quot;,&quot;&quot;)],
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  [],
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  [],
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>  &quot;x86_64-linux&quot;,
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>  &quot;/bin/sh&quot;,
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>  [&quot;-c&quot;,&quot;echo hello &gt; $out&quot;],
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>  [(&quot;builder&quot;,&quot;/bin/sh&quot;),
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>   (&quot;name&quot;,&quot;hello&quot;),
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>   (&quot;out&quot;,&quot;/nix/store/...-hello&quot;),
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>   (&quot;system&quot;,&quot;x86_64-linux&quot;)]
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Derive(
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  [(&quot;out&quot;,&quot;/nix/store/...-hello&quot;,&quot;&quot;,&quot;&quot;)],
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  [],
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  [],
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  &quot;x86_64-linux&quot;,
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>  &quot;/bin/sh&quot;,
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>  [&quot;-c&quot;,&quot;echo hello &gt; $out&quot;],
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>  [(&quot;builder&quot;,&quot;/bin/sh&quot;),
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>   (&quot;name&quot;,&quot;hello&quot;),
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>   (&quot;out&quot;,&quot;/nix/store/...-hello&quot;),
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>   (&quot;system&quot;,&quot;x86_64-linux&quot;)]
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>)
 </code></pre></div>
 <p>Note that the environment contains both explicit env vars and automatic ones (<code>builder</code>, <code>out</code>, <code>system</code>, <code>name</code>).</p>
 

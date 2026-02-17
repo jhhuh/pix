@@ -336,6 +336,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pixpkgs-pix" class="md-nav__link">
+    <span class="md-ellipsis">
+      pixpkgs — pix 위에 쌓기
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#_1" class="md-nav__link">
     <span class="md-ellipsis">
       읽는 순서
@@ -410,6 +419,8 @@
       
         
           
+        
+      
         
       
         
@@ -586,6 +597,27 @@
   
   <span class="md-ellipsis">
     pix.daemon
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/pixpkgs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pixpkgs
   </span>
   
 
@@ -854,16 +886,61 @@
 </tr>
 </tbody>
 </table>
+<h2 id="pixpkgs-pix">pixpkgs — pix 위에 쌓기<a class="headerlink" href="#pixpkgs-pix" title="Permanent link">&para;</a></h2>
+<p>내부 구조를 이해했다면, pixpkgs는 그 위에 nixpkgs 스타일의 패키지 세트를 구축하는 방법을 보여줍니다. Nix 패턴을 Python 관용구로 매핑합니다:</p>
+<table>
+<thead>
+<tr>
+<th>Nix 패턴</th>
+<th>Python 관용구</th>
+<th>pixpkgs 모듈</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mkDerivation</code></td>
+<td><code>drv()</code> 함수 → <code>Package</code> 데이터클래스</td>
+<td><a href="api/pixpkgs/#drv"><code>drv.py</code></a></td>
+</tr>
+<tr>
+<td><code>callPackage</code></td>
+<td><code>inspect.signature</code> + <code>getattr</code></td>
+<td><a href="api/pixpkgs/#packageset"><code>package_set.py</code></a></td>
+</tr>
+<tr>
+<td>문자열 보간 (<code>${pkg}</code>)</td>
+<td>출력 경로를 반환하는 <code>__str__</code></td>
+<td><a href="api/pixpkgs/#package"><code>drv.py</code></a></td>
+</tr>
+<tr>
+<td><code>pkg.override</code></td>
+<td>병합된 kwargs로 <code>drv()</code> 재호출</td>
+<td><a href="api/pixpkgs/#packageoverride"><code>drv.py</code></a></td>
+</tr>
+<tr>
+<td><code>nix-store --realize</code></td>
+<td><code>realize()</code> → 데몬 <code>add_text_to_store</code> + <code>build_paths</code></td>
+<td><a href="api/pixpkgs/#realize"><code>realize.py</code></a></td>
+</tr>
+</tbody>
+</table>
+<p>자세한 내용은 <a href="api/pixpkgs/">pixpkgs API 레퍼런스</a>를 참고하세요.</p>
 <h2 id="_1">읽는 순서<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>모듈들은 서로 의존합니다. 아래에서부터 시작하세요:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>1. base32.py        ← 가장 단순: 인코딩만
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>2. hash.py          ← 함수 하나: XOR-폴드
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>3. nar.py           ← 직렬화 형식, hash 사용
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>4. store_path.py    ← 핵심 알고리즘, base32 + hash 사용
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>5. derivation.py    ← 파싱 + hashDerivationModulo 트릭
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>6. daemon.py        ← 독립적: Unix 소켓 와이어 프로토콜
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pix (Nix 내부 구조):
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  1. base32.py        ← 가장 단순: 인코딩만
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  2. hash.py          ← 함수 하나: XOR-폴드
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  3. nar.py           ← 직렬화 형식, hash 사용
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  4. store_path.py    ← 핵심 알고리즘, base32 + hash 사용
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  5. derivation.py    ← 파싱 + hashDerivationModulo 트릭
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  6. daemon.py        ← 독립적: Unix 소켓 와이어 프로토콜
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>pixpkgs (패키지 세트 레이어, pix 사용):
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>  7. drv.py           ← drv() + Package: mkDerivation 등가물
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>  8. package_set.py   ← PackageSet.call(): callPackage 등가물
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>  9. realize.py       ← .drv를 스토어에 쓰고 데몬으로 빌드
 </code></pre></div>
-<p>각 파일은 자체적으로 완결되며 150줄 미만입니다. 전체 코드베이스를 한 번에 읽을 수 있습니다.</p>
+<p>각 pix 파일은 자체적으로 완결되며 150줄 미만입니다. 전체 코드베이스를 한 번에 읽을 수 있습니다.</p>
 <h2 id="_2">직접 해보기<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>nix<span class="w"> </span>develop
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
@@ -878,7 +955,7 @@
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>drv-show<span class="w"> </span>/nix/store/...-hello.drv
 </code></pre></div>
 <h2 id="_3">검증<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>-v<span class="w">   </span><span class="c1"># 28개 테스트, 모두 실제 nix와 비교</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>pixpkgs/tests/<span class="w"> </span>-v<span class="w">   </span><span class="c1"># 41개 테스트, 모두 실제 nix와 비교</span>
 </code></pre></div>
 <h2 id="_4">이 문서 사용법<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <ul>
