@@ -59,6 +59,7 @@ nav:
     - pix.store_path: api/store_path.md
     - pix.derivation: api/derivation.md
     - pix.daemon: api/daemon.md
+    - pixpkgs: api/pixpkgs.md
   - Internals:
     - internals/index.md
     - Store Paths: internals/store-paths.md

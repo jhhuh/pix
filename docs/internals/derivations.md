@@ -87,7 +87,7 @@ This means fixed-output derivations have stable hashes that don't change when th
 
 For all other derivations:
 
-1. **Blank output paths**: Replace all output paths with `""`
+1. **Optionally blank output paths**: Replace output paths with `""` in both `.outputs` and `.env` (see [two modes](#two-modes-maskoutputs) below)
 2. **Replace input drv paths**: For each input derivation, replace the `.drv` path with the hex-encoded `hashDerivationModulo` of that input
 3. **Serialize**: Convert the masked derivation back to ATerm
 4. **Hash**: `sha256(serialized_masked_drv)`
@@ -120,6 +120,36 @@ For all other derivations:
                    v
            derivation hash (32 bytes)
 ```
+
+### Two modes: `maskOutputs`
+
+`hashDerivationModulo` takes a `maskOutputs` parameter that controls whether output paths are blanked. Nix uses two different call sites:
+
+| Call site | `maskOutputs` | Output paths | Used for |
+|-----------|:------------:|:------------:|----------|
+| `staticOutputHashes` | `true` | blanked (`""`) | Computing a derivation's **own** output paths |
+| `pathDerivationModulo` | `false` | **kept** | Computing the hash of an **input** derivation |
+
+This distinction matters: when derivation A depends on derivation B, Nix computes B's hash with `maskOutputs=false` — B's filled output paths are part of the hash used as A's `inputDrvs` key. Only A's own outputs are blanked (to break A's circularity).
+
+```
+Computing output path for consumer.drv:
+
+  dep.drv (input)                consumer.drv (self)
+  ─────────────                  ───────────────────
+  maskOutputs = false            maskOutputs = true
+  output paths KEPT              output paths BLANKED
+         │                              │
+         v                              v
+    dep_hash (includes             consumer_hash
+    dep's output path)                  │
+         │                              v
+         └──── used as ──────> inputDrvs key
+                               in consumer's masked ATerm
+```
+
+!!! warning "Common pitfall"
+    Using `maskOutputs=true` for input derivations produces the wrong hash — the input's output path is lost, changing the consumer's `inputDrvs` key and ultimately its output path. This is the difference between `staticOutputHashes` (for self) and `pathDerivationModulo` (for inputs).
 
 ### Computing output paths
 

@@ -87,7 +87,7 @@ hash = sha256("fixed:out:<hashAlgo>:<hashValue>:")
 
 다른 모든 derivation의 경우:
 
-1. **출력 경로 비우기**: 모든 출력 경로를 `""`로 대체
+1. **선택적으로 출력 경로 비우기**: `.outputs`와 `.env`에서 출력 경로를 `""`로 대체 (아래 [두 가지 모드](#two-modes-maskoutputs) 참고)
 2. **입력 drv 경로 대체**: 각 입력 derivation에 대해 `.drv` 경로를 해당 입력의 16진수 인코딩된 `hashDerivationModulo`로 대체
 3. **직렬화**: 마스크된 derivation을 ATerm으로 변환
 4. **해싱**: `sha256(serialized_masked_drv)`
@@ -120,6 +120,37 @@ hash = sha256("fixed:out:<hashAlgo>:<hashValue>:")
                    v
            derivation 해시 (32 바이트)
 ```
+
+### 두 가지 모드: `maskOutputs` { #two-modes-maskoutputs }
+
+`hashDerivationModulo`는 출력 경로를 비울지 여부를 제어하는 `maskOutputs` 매개변수를 받습니다. Nix는 두 가지 다른 호출 지점에서 사용합니다:
+
+| 호출 지점 | `maskOutputs` | 출력 경로 | 용도 |
+|----------|:------------:|:--------:|------|
+| `staticOutputHashes` | `true` | 비워짐 (`""`) | derivation **자신**의 출력 경로 계산 |
+| `pathDerivationModulo` | `false` | **유지** | **입력** derivation의 해시 계산 |
+
+이 구분이 중요합니다: derivation A가 derivation B에 의존할 때, Nix는 B의 해시를 `maskOutputs=false`로 계산합니다 — B의 채워진 출력 경로가 A의 `inputDrvs` 키로 사용되는 해시의 일부가 됩니다. A 자신의 출력만 비워집니다 (A의 순환성을 해결하기 위해).
+
+```
+consumer.drv의 출력 경로 계산:
+
+  dep.drv (입력)                consumer.drv (자기 자신)
+  ─────────────                  ───────────────────
+  maskOutputs = false            maskOutputs = true
+  출력 경로 유지                  출력 경로 비워짐
+         │                              │
+         v                              v
+    dep_hash (dep의                 consumer_hash
+    출력 경로 포함)                       │
+         │                              v
+         └──── 다음으로 사용 ──> inputDrvs 키
+                               consumer의 마스크된 ATerm 내
+
+```
+
+!!! warning "흔한 실수"
+    입력 derivation에 `maskOutputs=true`를 사용하면 잘못된 해시가 생성됩니다 — 입력의 출력 경로가 사라지면서 consumer의 `inputDrvs` 키가 바뀌고, 결국 출력 경로가 달라집니다. 이것이 `staticOutputHashes` (자기 자신용)와 `pathDerivationModulo` (입력용)의 차이입니다.
 
 ### 출력 경로 계산
 

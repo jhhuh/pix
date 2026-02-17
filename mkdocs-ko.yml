@@ -63,6 +63,7 @@ nav:
     - pix.store_path: api/store_path.md
     - pix.derivation: api/derivation.md
     - pix.daemon: api/daemon.md
+    - pixpkgs: api/pixpkgs.md
   - 내부 구조:
     - internals/index.md
     - 스토어 경로: internals/store-paths.md
