@@ -115,3 +115,8 @@ Append-only log of what was attempted, what failed, what worked, and why.
 ### All 41 tests pass (28 pix + 13 pixpkgs)
 
 - Commit — "Add pixpkgs: nixpkgs-like package set using Python idioms".
+
+## 2026-02-17 ~07:12 — Final documentation updates
+
+- Updated CLAUDE.md with pixpkgs architecture and new gotchas.
+- Commit — "Update CLAUDE.md with pixpkgs architecture and new gotchas".
