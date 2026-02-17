@@ -219,7 +219,11 @@ def serialize(drv: Derivation) -> str:
     return "".join(parts)
 
 
-def hash_derivation_modulo(drv: Derivation, drv_hashes: dict[str, bytes] | None = None) -> bytes:
+def hash_derivation_modulo(
+    drv: Derivation,
+    drv_hashes: dict[str, bytes] | None = None,
+    mask_outputs: bool = True,
+) -> bytes:
     """Compute the modular hash of a derivation for output path computation.
 
     The problem: a derivation's output path depends on the derivation hash,
@@ -232,7 +236,7 @@ def hash_derivation_modulo(drv: Derivation, drv_hashes: dict[str, bytes] | None 
       → sha256("fixed:out:<hashAlgo>:<hashValue>:")
 
     For REGULAR derivations:
-      1. Blank all output paths (replace with "")
+      1. Optionally blank all output paths (replace with "")
       2. Replace each input .drv path with its own hashDerivationModulo (recursive)
       3. Serialize the masked derivation to ATerm
       4. SHA-256 hash the result
@@ -240,6 +244,13 @@ def hash_derivation_modulo(drv: Derivation, drv_hashes: dict[str, bytes] | None 
     This means a derivation's hash depends on the *content* of its inputs,
     not their store paths — which is the key insight that makes Nix's
     content-addressing work.
+
+    mask_outputs: when True (staticOutputHashes), blank the derivation's own
+      output paths — used to compute a derivation's OWN output paths without
+      circularity. When False (pathDerivationModulo), keep the output paths —
+      used to compute the hash of an INPUT derivation whose output paths are
+      already known. Nix uses maskOutputs=false in pathDerivationModulo so
+      that the input hash incorporates the filled output paths.
 
     See: nix/src/libstore/derivations.cc — hashDerivationModulo()
     """
@@ -254,22 +265,42 @@ def hash_derivation_modulo(drv: Derivation, drv_hashes: dict[str, bytes] | None 
         o = drv.outputs["out"]
         return sha256(f"fixed:out:{o.hash_algo}:{o.hash_value}:".encode())
 
-    # Regular: mask output paths and replace input drv paths with their hashes
-    masked = Derivation(
-        outputs={name: DerivationOutput("", o.hash_algo, o.hash_value) for name, o in drv.outputs.items()},
-        input_drvs={},
-        input_srcs=list(drv.input_srcs),
-        platform=drv.platform,
-        builder=drv.builder,
-        args=list(drv.args),
-        env={k: v for k, v in drv.env.items()},
-    )
-
+    # Replace input drv paths with their modular hashes
+    replaced_input_drvs: dict[str, list[str]] = {}
     for drv_path in sorted(drv.input_drvs):
         if drv_path in drv_hashes:
             hash_hex = drv_hashes[drv_path].hex()
         else:
             raise ValueError(f"missing hash for input derivation: {drv_path}")
-        masked.input_drvs[hash_hex] = sorted(drv.input_drvs[drv_path])
+        replaced_input_drvs[hash_hex] = sorted(drv.input_drvs[drv_path])
+
+    if mask_outputs:
+        # staticOutputHashes path: blank output paths in both .outputs and .env
+        # to break the circular dependency when computing our OWN output paths.
+        masked_env = {k: v for k, v in drv.env.items()}
+        for name in drv.outputs:
+            if name in masked_env:
+                masked_env[name] = ""
+        masked = Derivation(
+            outputs={name: DerivationOutput("", o.hash_algo, o.hash_value) for name, o in drv.outputs.items()},
+            input_drvs=replaced_input_drvs,
+            input_srcs=list(drv.input_srcs),
+            platform=drv.platform,
+            builder=drv.builder,
+            args=list(drv.args),
+            env=masked_env,
+        )
+    else:
+        # pathDerivationModulo path: keep output paths and env as-is.
+        # Only replace input drv paths with their hashes.
+        masked = Derivation(
+            outputs={name: DerivationOutput(o.path, o.hash_algo, o.hash_value) for name, o in drv.outputs.items()},
+            input_drvs=replaced_input_drvs,
+            input_srcs=list(drv.input_srcs),
+            platform=drv.platform,
+            builder=drv.builder,
+            args=list(drv.args),
+            env=dict(drv.env),
+        )
 
     return sha256(serialize(masked).encode())

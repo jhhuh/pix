@@ -78,3 +78,40 @@ Append-only log of what was attempted, what failed, what worked, and why.
 - Removed `c/` directory (old C++ Nix API hello-world, irrelevant to educational purpose) and C-related dev dependencies from `flake.nix`.
 - **Gotcha:** Compiled binary `c/main` was accidentally tracked. Fix: `git rm --cached c/main`.
 - Commit — "Remove c/ directory and C-related dev dependencies".
+
+## 2026-02-17 ~05:25 — pixpkgs design & implementation
+
+- Designed pixpkgs architecture: nixpkgs-like package set using Python idioms.
+- Python idiom mappings decided:
+  - `callPackage` → `inspect.signature` + `getattr` (`PackageSet.call`)
+  - `override` → `dataclasses.replace` / re-call with merged kwargs
+  - String interpolation → `__str__` returning output path
+  - Lazy package attrs → `@cached_property` on PackageSet
+- Implemented `pixpkgs/drv.py`, `pixpkgs/package_set.py`, `pixpkgs/realize.py`, tests.
+
+### First pixpkgs test run: 10/10 unit, 1/3 e2e pass
+
+- **Bug: `^` vs `!` separator.** Daemon wire protocol uses `!` (legacy DerivedPath format), not `^` (CLI format). Fix: changed separator in `realize.py`.
+- **Bug: Missing recursive .drv registration.** `realize()` only registered top-level .drv, not dependency .drv files. Fix: added `_register_drv()` recursive function.
+- **Bug: Env not blanked in `hash_derivation_modulo`.** Nix blanks output paths in BOTH `.outputs` AND `.env`. Our code only blanked `.outputs`. Fix: added env blanking.
+
+### Still failing: derivations with dependencies
+
+- Entered deep debugging: byte-by-byte .drv comparison, SHA-256 trace.
+- Fetched Nix 2.24.14 C++ source from GitHub (`src/libstore/derivations.cc`).
+
+### The hardest bug: `hashDerivationModulo` two-mode distinction
+
+- **Root cause** (found at lines 798-800 of `derivations.cc`):
+  - `staticOutputHashes` calls `hashDerivationModulo` with `maskOutputs=true` — blanks own output paths (for computing OWN outputs).
+  - `pathDerivationModulo` calls it with `maskOutputs=false` — keeps filled output paths (for computing INPUT derivation hashes).
+  - Our code always used the equivalent of `maskOutputs=true`.
+- **Fix:** Added `mask_outputs: bool = True` parameter to `hash_derivation_modulo`. In `pixpkgs/drv.py`, `_collect_input_hashes()` recursively computes dep hashes with `mask_outputs=False`.
+
+### Sandbox build failure
+
+- **Bug: `cat`/`tr` not found in Nix build sandbox.** Only shell builtins available via `/bin/sh`. Fix: replaced `cat` with `read line < file; echo $line`.
+
+### All 41 tests pass (28 pix + 13 pixpkgs)
+
+- Commit — "Add pixpkgs: nixpkgs-like package set using Python idioms".
