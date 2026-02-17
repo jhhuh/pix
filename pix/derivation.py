@@ -1,6 +1,8 @@
 """Parse and serialize Nix .drv files (ATerm format).
 
-ATerm derivation format:
+A derivation is Nix's unit of build — it describes how to produce store
+paths from inputs. Derivations are stored as .drv files in ATerm format:
+
     Derive(
         [("out","/nix/store/...","",""), ...],       # outputs
         [("/nix/store/...drv",["out"]), ...],         # inputDrvs
@@ -10,6 +12,13 @@ ATerm derivation format:
         ["--", ...],                                  # args
         [("key","value"), ...]                        # env
     )
+
+Each output is a 4-tuple: (name, path, hashAlgo, hash).
+  - Normal outputs: hashAlgo and hash are "" — the path is computed by Nix
+  - Fixed outputs (fetchurl): hashAlgo is "sha256" or "r:sha256",
+    hash is the expected content hash. "r:" means recursive (NAR hash).
+
+See: nix/src/libstore/derivations.cc
 """
 
 from dataclasses import dataclass, field
@@ -211,19 +220,32 @@ def serialize(drv: Derivation) -> str:
 
 
 def hash_derivation_modulo(drv: Derivation, drv_hashes: dict[str, bytes] | None = None) -> bytes:
-    """Compute the hash used for output path computation.
+    """Compute the modular hash of a derivation for output path computation.
 
-    For fixed-output derivations (single output "out" with hash_algo set),
-    returns sha256("fixed:out:<hashAlgo>:<hashValue>:").
+    The problem: a derivation's output path depends on the derivation hash,
+    but the derivation *contains* its own output paths (in the env). This is
+    circular. hashDerivationModulo breaks the cycle:
 
-    For other derivations, replaces each input derivation path with its
-    modular hash, then hashes the masked ATerm.
+    For FIXED-OUTPUT derivations (fetchurl, etc.):
+      The hash depends only on the expected output hash, not on how it's built.
+      This is why changing a fetchurl's build deps doesn't change its output path.
+      → sha256("fixed:out:<hashAlgo>:<hashValue>:")
 
-    drv_hashes: map from input .drv path to its modular hash (from recursive calls)
+    For REGULAR derivations:
+      1. Blank all output paths (replace with "")
+      2. Replace each input .drv path with its own hashDerivationModulo (recursive)
+      3. Serialize the masked derivation to ATerm
+      4. SHA-256 hash the result
+
+    This means a derivation's hash depends on the *content* of its inputs,
+    not their store paths — which is the key insight that makes Nix's
+    content-addressing work.
+
+    See: nix/src/libstore/derivations.cc — hashDerivationModulo()
     """
     drv_hashes = drv_hashes or {}
 
-    # Fixed-output check
+    # Fixed-output: hash depends only on the expected output, not the build process
     if (
         len(drv.outputs) == 1
         and "out" in drv.outputs
@@ -232,7 +254,7 @@ def hash_derivation_modulo(drv: Derivation, drv_hashes: dict[str, bytes] | None 
         o = drv.outputs["out"]
         return sha256(f"fixed:out:{o.hash_algo}:{o.hash_value}:".encode())
 
-    # Build a masked derivation: replace output paths with "" and input drv paths with hashes
+    # Regular: mask output paths and replace input drv paths with their hashes
     masked = Derivation(
         outputs={name: DerivationOutput("", o.hash_algo, o.hash_value) for name, o in drv.outputs.items()},
         input_drvs={},
@@ -243,7 +265,6 @@ def hash_derivation_modulo(drv: Derivation, drv_hashes: dict[str, bytes] | None 
         env={k: v for k, v in drv.env.items()},
     )
 
-    # Replace input drv paths with their modular hashes
     for drv_path in sorted(drv.input_drvs):
         if drv_path in drv_hashes:
             hash_hex = drv_hashes[drv_path].hex()

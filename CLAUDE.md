@@ -4,18 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Pure Python implementation of Nix store operations. No FFI — data formats (base32, NAR, .drv, store paths) are computed natively, and store operations talk to the Nix daemon over its Unix socket. The C++ code in `c/` is a reference implementation against the Nix C API.
+Educational project: explore and understand Nix internals through readable Python. Each module reimplements one Nix concept (base32, NAR, store paths, derivations, daemon protocol) in straightforward Python, verified against the real `nix` CLI. The C++ code in `c/` is a reference showing the same operations via the Nix C API.
+
+**Priority: readability over performance.** Comments should explain *why* Nix does things a certain way, not just what the code does. When modifying code, preserve or improve the educational value.
 
 ## Development Environment
 
-Enter the dev shell (provides Python 3 with ipython/pkgconfig/pytest, pkg-config, and Nix C headers):
 ```
-nix develop
+nix develop   # Python 3, pytest, mkdocs, Nix C headers
 ```
 
-## Build & Run
+## Run & Test
 
-**Python (`pix/`):**
 ```
 python -m pix hash-path <path> [--base32]     # NAR hash
 python -m pix store-path <path> [--name NAME] # compute store path
@@ -24,37 +24,26 @@ python -m pix path-info <store-path>          # query daemon
 python -m pix is-valid <store-path>           # check path validity
 python -m pix add-text <name> [content]       # add text to store
 python -m pix build <path>...                 # build via daemon
+pytest tests/ -v                              # 28 tests
+mkdocs serve                                  # docs at localhost:8000
 ```
-
-**C++ reference (`c/`):**
-```
-cd c && make && ./main && make clean
-```
-Links against: `-lnixstorec -lnixutilc -lnixexprc`
-
-## Testing
-
-```
-pytest tests/ -v
-```
-Daemon tests (`test_daemon.py`) auto-skip if the daemon socket is unavailable.
 
 ## Architecture
 
-- `pix/base32.py` — Nix base32 encode/decode (custom alphabet `0123456789abcdfghijklmnpqrsvwxyz`, custom bit order)
-- `pix/hash.py` — SHA-256 helpers, XOR-fold compression (32 -> 20 bytes)
-- `pix/nar.py` — NAR archive serialization + hashing (uint64-le framed, 8-byte padded, sorted dirs)
-- `pix/store_path.py` — Store path computation: `make_text_store_path`, `make_source_store_path`, `make_fixed_output_path`, `make_output_path`
-- `pix/derivation.py` — ATerm `.drv` parser/serializer, `Derivation` dataclass, `hash_derivation_modulo`
-- `pix/daemon.py` — Nix daemon Unix socket client (protocol 1.37): `is_valid_path`, `query_path_info`, `add_text_to_store`, `build_paths`
-- `pix/main.py` — CLI entry point (argparse subcommands)
-- `c/` — C++ reference using Nix C API directly
-- `flake.nix` — Dev shell. Pinned to nixos-24.11, x86_64-linux only.
+Reading order (dependency chain):
 
-## Key implementation notes
+1. `pix/base32.py` — Nix base32: custom alphabet, reversed bit extraction vs RFC 4648
+2. `pix/hash.py` — XOR-fold compression (32→20 bytes), not truncation
+3. `pix/nar.py` — NAR: deterministic archive, no timestamps/uid, only executable bit
+4. `pix/store_path.py` — Fingerprint: `<type>:sha256:<hex>:/nix/store:<name>` → compress → base32
+5. `pix/derivation.py` — ATerm `.drv` parser + `hashDerivationModulo` (breaks circular output-path deps)
+6. `pix/daemon.py` — Unix socket protocol: magic handshake, uint64-LE framing, stderr log draining
 
-- Store path fingerprint format: `<type>:sha256:<hex(inner_hash)>:/nix/store:<name>`
-- Type prefix has NO trailing colon when references list is empty (e.g. `text` not `text:`)
-- NAR preserves only executable bit, not full mode/owner/timestamps
-- Daemon handshake: must read nix version string (>= 1.33) before trusted status (>= 1.35)
-- All daemon wire values are uint64 little-endian; strings are length-prefixed + zero-padded to 8 bytes
+Also: `c/main.cc` (C++ reference), `pix/main.py` (CLI), `docs/` (MkDocs site)
+
+## Key gotchas
+
+- Type prefix has NO trailing colon when references list is empty (`text` not `text:`)
+- Daemon handshake order: read nix version string (>= 1.33) BEFORE trusted status (>= 1.35)
+- NAR directory entries must be sorted lexicographically
+- XOR-fold is NOT truncation — every input byte contributes to every output byte
