@@ -39,3 +39,9 @@ Append-only log of what was attempted, what failed, what worked, and why.
 - **Bug: Trailing colon in type prefix.** `"text:" + ":".join([])` produces `"text:"` but Nix uses `"text"` (no trailing colon) when references list is empty. Fix: created `_make_type()` helper that only appends `:ref` when references exist.
 - After fix, computed store paths match daemon output exactly. CLI smoke tests pass (NAR hash matches `nix hash path`).
 - Commit — "Implement pure Python Nix functionality (no FFI)".
+
+## 2026-02-17 ~03:24 — Documentation
+
+- Cross-verified against `nix derivation show`, `nix store add-path`, `nix path-info`. All match.
+- Wrote full README.md and CLAUDE.md.
+- Commit — "Add full documentation for all modules".
