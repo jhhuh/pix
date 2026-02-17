@@ -1,22 +1,26 @@
 site_name: pix
-site_description: Explore Nix internals through readable Python
+site_description: 읽기 쉬운 Python으로 Nix 내부 구조 탐구하기
+site_url: https://jhhuh.github.io/pix/ko/
 repo_url: https://github.com/jhhuh/pix
+docs_dir: docs/ko
+site_dir: site/ko
 
 theme:
   name: material
+  language: ko
   palette:
     - scheme: default
       primary: blue grey
       accent: cyan
       toggle:
         icon: material/brightness-7
-        name: Switch to dark mode
+        name: 다크 모드로 전환
     - scheme: slate
       primary: blue grey
       accent: cyan
       toggle:
         icon: material/brightness-4
-        name: Switch to light mode
+        name: 라이트 모드로 전환
   features:
     - content.code.copy
     - navigation.sections
@@ -49,9 +53,9 @@ extra:
       lang: ko
 
 nav:
-  - Home: index.md
-  - CLI Reference: cli.md
-  - API Reference:
+  - 홈: index.md
+  - CLI 레퍼런스: cli.md
+  - API 레퍼런스:
     - api/index.md
     - pix.base32: api/base32.md
     - pix.hash: api/hash.md
@@ -59,10 +63,10 @@ nav:
     - pix.store_path: api/store_path.md
     - pix.derivation: api/derivation.md
     - pix.daemon: api/daemon.md
-  - Internals:
+  - 내부 구조:
     - internals/index.md
-    - Store Paths: internals/store-paths.md
-    - NAR Format: internals/nar-format.md
-    - Daemon Protocol: internals/daemon-protocol.md
-    - Derivations: internals/derivations.md
-    - Base32 Encoding: internals/base32.md
+    - 스토어 경로: internals/store-paths.md
+    - NAR 형식: internals/nar-format.md
+    - 데몬 프로토콜: internals/daemon-protocol.md
+    - 파생(Derivation): internals/derivations.md
+    - Base32 인코딩: internals/base32.md

@@ -66,3 +66,9 @@ Append-only log of what was attempted, what failed, what worked, and why.
 - Created GitHub repo via `gh repo create pix --public --source=. --push`.
 - Set description + topics: `nix`, `nix-store`, `python`, `educational`, `reverse-engineering`, `agentic-coding`.
 - Deployed MkDocs to GitHub Pages.
+
+## 2026-02-17 ~05:00 — Korean translation
+
+- Created 15 Korean translation pages, dual-config i18n approach (`mkdocs.yml` + `mkdocs-ko.yml`), language switcher.
+- **Gotcha:** `mkdocs gh-deploy` wipes `site/ko/` because it runs its own `mkdocs build`. Fix: build both sites separately, then deploy with `ghp-import -n -p -f site`.
+- Commit — "Add Korean translation for documentation".
