@@ -108,6 +108,20 @@ def path_to_store_path(path: str, name: str | None = None) -> str:
     return make_source_store_path(name or p.name, h)
 
 
+def placeholder(output_name: str) -> str:
+    """Nix's ``builtins.placeholder`` — a deterministic marker for output paths.
+
+    Returns "/" + nix-base32(sha256("nix-output:" + output_name)).
+    Used in env vars that need the output path at eval time (e.g. configureFlags
+    with -Dprefix). The drv() pipeline replaces these markers with actual output
+    paths after hashDerivationModulo is computed.
+
+    See: nix/src/libstore/store-api.cc — hashPlaceholder()
+    """
+    inner = sha256(f"nix-output:{output_name}".encode())
+    return "/" + b32encode(inner)
+
+
 def make_output_path(drv_hash: bytes, output_name: str, name: str) -> str:
     """Store path for a derivation output.
 

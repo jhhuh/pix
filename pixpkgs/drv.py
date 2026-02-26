@@ -20,7 +20,7 @@ from pix.derivation import (
     hash_derivation_modulo,
     serialize,
 )
-from pix.store_path import make_fixed_output_path, make_output_path, make_text_store_path
+from pix.store_path import make_fixed_output_path, make_output_path, make_text_store_path, placeholder
 
 
 def _collect_input_hashes(deps: list[Package], drv_hashes: dict[str, bytes]) -> None:
@@ -187,7 +187,9 @@ def drv(
         for n in output_names:
             computed_outputs[n] = make_output_path(drv_hash, n, name)
 
-        # Step 4: Fill output paths into derivation
+        # Step 4: Fill output paths into derivation.
+        # Only the output-named env vars get actual paths; placeholder()
+        # strings elsewhere survive into the .drv (replaced at build time).
         for n, path in computed_outputs.items():
             drv_obj.outputs[n] = DerivationOutput(path, "", "")
             drv_obj.env[n] = path

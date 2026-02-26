@@ -130,3 +130,20 @@ UPDATE_AUTOTOOLS_SCRIPT = _src(
 # ---------------------------------------------------------------------------
 
 PATCHELF_SETUP_HOOK = _src("patchelf", "setup-hook.sh")
+
+# ---------------------------------------------------------------------------
+# perl (pkgs/development/interpreters/perl/)
+# ---------------------------------------------------------------------------
+
+PERL_CVE_2024_56406 = _src("perl", "CVE-2024-56406.patch")
+PERL_CVE_2025_40909 = _src("perl", "CVE-2025-40909.patch")
+PERL_NO_SYS_DIRS = _src("perl", "no-sys-dirs-5.40.0.patch")
+PERL_FIX_C_LOCALE = _src("perl", "fix-build-with-only-C-locale-5.40.0.patch")
+PERL_SETUP_HOOK = _src("perl", "setup-hook.sh")
+
+# ---------------------------------------------------------------------------
+# bash (pkgs/shells/bash/)
+# ---------------------------------------------------------------------------
+
+BASH_PGRP_PIPE_PATCH = _src("bash", "pgrp-pipe-5.patch")
+SEPARATE_DEBUG_INFO_SH = _src("bash", "separate-debug-info.sh")

@@ -57,6 +57,7 @@ def mk_derivation(
     srcs: list[str] | None = None,
     env: dict[str, str] | None = None,
     output_names: list[str] | None = None,
+    input_drvs: dict[str, list[str]] | None = None,
 ) -> Package:
     """Create a package using the stdenv mkDerivation pattern.
 
@@ -73,7 +74,8 @@ def mk_derivation(
         deps: Additional Package dependencies beyond stdenv.
         srcs: Additional input source store paths.
         env: Package-specific env vars (override defaults).
-        output_names: Output names (default: ["out"]). Must be sorted.
+        output_names: Output names (default: ["out"]).
+        input_drvs: Override which outputs to pull from each dep.
     """
     if name is not None:
         drv_name = name
@@ -86,9 +88,11 @@ def mk_derivation(
     all_deps = [stdenv] + (deps or [])
 
     merged_env = dict(MKDERIVATION_DEFAULTS)
-    # Nix puts "out" first in the outputs env var, then the rest sorted.
+    # Nix's outputs env var: "out" first, rest preserves the Nix list order.
+    # The ATerm outputs *section* is always alphabetical, but the env var
+    # mirrors the user's ``outputs = [...]`` attribute from the .nix file.
     if output_names:
-        rest = sorted(n for n in output_names if n != "out")
+        rest = [n for n in output_names if n != "out"]
         merged_env["outputs"] = " ".join(["out"] + rest)
     else:
         merged_env["outputs"] = "out"
@@ -108,4 +112,5 @@ def mk_derivation(
         srcs=all_srcs,
         env=merged_env,
         output_names=output_names,
+        input_drvs=input_drvs,
     )
