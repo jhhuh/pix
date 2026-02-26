@@ -24,7 +24,7 @@ python -m pix path-info <store-path>          # query daemon
 python -m pix is-valid <store-path>           # check path validity
 python -m pix add-text <name> [content]       # add text to store
 python -m pix build <path>...                 # build via daemon
-pytest tests/ pixpkgs/tests/ -v               # 41 tests (28 pix + 13 pixpkgs)
+pytest tests/ pixpkgs/tests/ -v               # 47 tests (28 pix + 19 pixpkgs)
 mkdocs serve                                  # docs at localhost:8000
 ```
 
@@ -62,4 +62,5 @@ Python idioms mapping to Nix:
 - NAR directory entries must be sorted lexicographically
 - XOR-fold is NOT truncation — every input byte contributes to every output byte
 - `hashDerivationModulo` has two modes: `mask_outputs=True` (staticOutputHashes — blank own outputs to break circularity) vs `mask_outputs=False` (pathDerivationModulo — keep filled output paths for input derivation hashes)
+- Fixed-output derivation hash (Nix 2.28+): `sha256("fixed:out:<hashAlgo>:<hashValue>:<outputPath>")` — includes the output path, not just a trailing colon
 - Nix build sandbox has no coreutils: use shell builtins (`echo`, `read`, `test`) not `cat`, `tr`, `cp`

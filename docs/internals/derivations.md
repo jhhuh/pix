@@ -78,10 +78,10 @@ This is the algorithm Nix uses to compute the hash that determines output paths.
 For derivations with a single output `"out"` that has a `hashAlgo` set:
 
 ```
-hash = sha256("fixed:out:<hashAlgo>:<hashValue>:")
+hash = sha256("fixed:out:<hashAlgo>:<hashValue>:<outputPath>")
 ```
 
-This means fixed-output derivations have stable hashes that don't change when their build dependencies change — only the expected output hash matters.
+The output path is computed from the content hash via `make_fixed_output_path` and included in the fingerprint. Since the output path is itself deterministic from the content hash, this doesn't create circularity — it just makes the fingerprint more explicit. Fixed-output derivations have stable hashes that don't change when their build dependencies change — only the expected output hash matters.
 
 ### Regular derivations
 

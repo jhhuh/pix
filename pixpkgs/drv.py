@@ -20,7 +20,7 @@ from pix.derivation import (
     hash_derivation_modulo,
     serialize,
 )
-from pix.store_path import make_output_path, make_text_store_path
+from pix.store_path import make_fixed_output_path, make_output_path, make_text_store_path
 
 
 def _collect_input_hashes(deps: list[Package], drv_hashes: dict[str, bytes]) -> None:
@@ -75,18 +75,27 @@ def drv(
     output_names: list[str] | None = None,
     deps: list[Package] | None = None,
     srcs: list[str] | None = None,
+    output_hash: str | None = None,
+    output_hash_algo: str | None = None,
+    output_hash_mode: str | None = None,
+    input_drvs: dict[str, list[str]] | None = None,
 ) -> Package:
     """Create a Package with computed output paths and .drv store path.
 
     Args:
-        name:         Package name (becomes the store path suffix).
-        builder:      Path to the builder executable.
-        system:       Build platform (default: x86_64-linux).
-        args:         Arguments to the builder.
-        env:          Extra environment variables.
-        output_names: Output names (default: ["out"]).
-        deps:         Package dependencies (input derivations).
-        srcs:         Input source store paths.
+        name:              Package name (becomes the store path suffix).
+        builder:           Path to the builder executable.
+        system:            Build platform (default: x86_64-linux).
+        args:              Arguments to the builder.
+        env:               Extra environment variables.
+        output_names:      Output names (default: ["out"]).
+        deps:              Package dependencies (input derivations).
+        srcs:              Input source store paths.
+        output_hash:       Hash value for fixed-output derivations (hex).
+        output_hash_algo:  Hash algorithm for fixed-output (e.g. "sha256").
+        output_hash_mode:  "flat" or "recursive" (default: None = non-fixed).
+        input_drvs:        Raw input derivations dict (drv_path -> [outputs]).
+                           Overrides automatic dep collection when provided.
     """
     args = args or []
     env = dict(env or {})
@@ -94,59 +103,98 @@ def drv(
     deps = deps or []
     srcs = srcs or []
 
+    is_fixed_output = output_hash is not None
+
     # Save original kwargs for override()
     orig_args = dict(
         name=name, builder=builder, system=system, args=args,
         env=env, output_names=output_names, deps=deps, srcs=srcs,
+        output_hash=output_hash, output_hash_algo=output_hash_algo,
+        output_hash_mode=output_hash_mode, input_drvs=input_drvs,
     )
 
-    # Collect input derivations from deps
-    input_drvs: dict[str, list[str]] = {}
+    # Collect input derivations: explicit input_drvs or from deps.
+    # When input_drvs specifies outputs for a dep, that takes priority
+    # (prevents adding unwanted outputs like "static" when only "dev"+"out" are needed).
+    computed_input_drvs: dict[str, list[str]] = {}
+    if input_drvs is not None:
+        computed_input_drvs = dict(input_drvs)
     for dep in deps:
-        input_drvs[dep.drv_path] = list(dep.outputs.keys())
+        if dep.drv_path not in computed_input_drvs:
+            computed_input_drvs[dep.drv_path] = sorted(dep.outputs.keys())
 
-    # Step 1: Create derivation with blank output paths
-    outputs = {n: DerivationOutput("", "", "") for n in output_names}
-    drv_obj = Derivation(
-        outputs=outputs,
-        input_drvs=input_drvs,
-        input_srcs=sorted(srcs),
-        platform=system,
-        builder=builder,
-        args=args,
-        env=env,
-    )
+    if is_fixed_output:
+        # Fixed-output: hash_algo field in ATerm includes method prefix
+        hash_algo_field = output_hash_algo or "sha256"
+        if output_hash_mode == "recursive":
+            hash_algo_field = "r:" + hash_algo_field
 
-    # Auto-add standard env vars (like Nix does)
-    drv_obj.env.setdefault("name", name)
-    drv_obj.env.setdefault("builder", builder)
-    drv_obj.env.setdefault("system", system)
-    for n in output_names:
-        drv_obj.env.setdefault(n, "")  # placeholder, filled below
+        # Compute output path directly from content hash
+        content_hash = bytes.fromhex(output_hash)
+        recursive = output_hash_mode == "recursive"
+        out_path = make_fixed_output_path(
+            name, output_hash_algo or "sha256", content_hash, recursive,
+        )
 
-    # Step 2: Compute hashDerivationModulo
-    # Collect hashes of input derivations with mask_outputs=False.
-    # Nix's pathDerivationModulo uses maskOutputs=false: the dep's filled
-    # output paths are part of the hash. Only the current derivation's
-    # own outputs are blanked (mask_outputs=True) to break circularity.
-    drv_hashes: dict[str, bytes] = {}
-    _collect_input_hashes(deps, drv_hashes)
+        outputs = {"out": DerivationOutput(out_path, hash_algo_field, output_hash)}
+        drv_obj = Derivation(
+            outputs=outputs,
+            input_drvs=computed_input_drvs,
+            input_srcs=sorted(srcs),
+            platform=system,
+            builder=builder,
+            args=args,
+            env=env,
+        )
 
-    drv_hash = hash_derivation_modulo(drv_obj, drv_hashes)
+        # Auto-add standard env vars (skip for structured attrs: __json in env)
+        if "__json" not in drv_obj.env:
+            drv_obj.env.setdefault("name", name)
+            drv_obj.env.setdefault("builder", builder)
+            drv_obj.env.setdefault("system", system)
+        drv_obj.env.setdefault("out", out_path)
 
-    # Step 3: Compute output paths
-    computed_outputs = {}
-    for n in output_names:
-        computed_outputs[n] = make_output_path(drv_hash, n, name)
+        computed_outputs = {"out": out_path}
+    else:
+        # Step 1: Create derivation with blank output paths
+        outputs = {n: DerivationOutput("", "", "") for n in output_names}
+        drv_obj = Derivation(
+            outputs=outputs,
+            input_drvs=computed_input_drvs,
+            input_srcs=sorted(srcs),
+            platform=system,
+            builder=builder,
+            args=args,
+            env=env,
+        )
 
-    # Step 4: Fill output paths into derivation
-    for n, path in computed_outputs.items():
-        drv_obj.outputs[n] = DerivationOutput(path, "", "")
-        drv_obj.env[n] = path
+        # Auto-add standard env vars (skip for structured attrs: __json in env)
+        if "__json" not in drv_obj.env:
+            drv_obj.env.setdefault("name", name)
+            drv_obj.env.setdefault("builder", builder)
+            drv_obj.env.setdefault("system", system)
+        for n in output_names:
+            drv_obj.env.setdefault(n, "")  # placeholder, filled below
+
+        # Step 2: Compute hashDerivationModulo
+        drv_hashes: dict[str, bytes] = {}
+        _collect_input_hashes(deps, drv_hashes)
+
+        drv_hash = hash_derivation_modulo(drv_obj, drv_hashes)
+
+        # Step 3: Compute output paths
+        computed_outputs = {}
+        for n in output_names:
+            computed_outputs[n] = make_output_path(drv_hash, n, name)
+
+        # Step 4: Fill output paths into derivation
+        for n, path in computed_outputs.items():
+            drv_obj.outputs[n] = DerivationOutput(path, "", "")
+            drv_obj.env[n] = path
 
     # Step 5-6: Serialize and compute .drv store path
     drv_text = serialize(drv_obj)
-    refs = sorted(input_drvs.keys()) + sorted(srcs)
+    refs = sorted(computed_input_drvs.keys()) + sorted(srcs)
     drv_store_path = make_text_store_path(name + ".drv", drv_text.encode(), refs)
 
     return Package(

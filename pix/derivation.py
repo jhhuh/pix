@@ -233,7 +233,7 @@ def hash_derivation_modulo(
     For FIXED-OUTPUT derivations (fetchurl, etc.):
       The hash depends only on the expected output hash, not on how it's built.
       This is why changing a fetchurl's build deps doesn't change its output path.
-      → sha256("fixed:out:<hashAlgo>:<hashValue>:")
+      → sha256("fixed:out:<hashAlgo>:<hashValue>:<outputPath>")
 
     For REGULAR derivations:
       1. Optionally blank all output paths (replace with "")
@@ -263,7 +263,7 @@ def hash_derivation_modulo(
         and drv.outputs["out"].hash_algo != ""
     ):
         o = drv.outputs["out"]
-        return sha256(f"fixed:out:{o.hash_algo}:{o.hash_value}:".encode())
+        return sha256(f"fixed:out:{o.hash_algo}:{o.hash_value}:{o.path}".encode())
 
     # Replace input drv paths with their modular hashes
     replaced_input_drvs: dict[str, list[str]] = {}

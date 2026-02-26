@@ -93,6 +93,10 @@ def make_output_path(drv_hash: bytes, output_name: str, name: str) -> str:
     """Store path for a derivation output.
 
     drv_hash comes from hash_derivation_modulo() in derivation.py.
+    The "out" output uses the base name; other outputs append "-<output>":
+      "out" → "zlib-1.3.1"
+      "dev" → "zlib-1.3.1-dev"
     """
     type_prefix = f"output:{output_name}"
-    return make_store_path(type_prefix, drv_hash, name)
+    path_name = name if output_name == "out" else f"{name}-{output_name}"
+    return make_store_path(type_prefix, drv_hash, path_name)

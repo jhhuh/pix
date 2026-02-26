@@ -78,10 +78,10 @@ ATerm의 문자열은 다음 이스케이프 시퀀스를 사용합니다:
 `hashAlgo`가 설정된 단일 출력 `"out"`을 가진 derivation의 경우:
 
 ```
-hash = sha256("fixed:out:<hashAlgo>:<hashValue>:")
+hash = sha256("fixed:out:<hashAlgo>:<hashValue>:<outputPath>")
 ```
 
-이것은 고정 출력 derivation이 빌드 의존성이 변경되어도 안정적인 해시를 가진다는 것을 의미합니다 — 기대 출력 해시만 중요합니다.
+출력 경로는 콘텐츠 해시로부터 `make_fixed_output_path`를 통해 계산되어 핑거프린트에 포함됩니다. 출력 경로 자체가 콘텐츠 해시로부터 결정론적이므로 순환이 발생하지 않습니다. 고정 출력 derivation은 빌드 의존성이 변경되어도 안정적인 해시를 가집니다 — 기대 출력 해시만 중요합니다.
 
 ### 일반 derivation
 

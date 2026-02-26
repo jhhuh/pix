@@ -80,7 +80,7 @@ Compute the modular hash of a derivation, used for output path computation.
 **Fixed-output derivations** (single output `"out"` with `hash_algo` set):
 
 ```
-sha256("fixed:out:<hash_algo>:<hash_value>:")
+sha256("fixed:out:<hash_algo>:<hash_value>:<output_path>")
 ```
 
 **Regular derivations**: Creates a masked copy where output paths are blanked and input derivation paths are replaced by their modular hashes, then hashes the resulting ATerm.

@@ -60,13 +60,13 @@ def test_escape_roundtrip():
 
 
 def test_hash_derivation_modulo_fixed_output():
-    """Fixed-output derivations hash to sha256('fixed:out:<algo>:<hash>:')."""
+    """Fixed-output derivations hash to sha256('fixed:out:<algo>:<hash>:<path>')."""
     drv = Derivation(
         outputs={"out": DerivationOutput("/nix/store/x", "sha256", "abc123")},
     )
     h = hash_derivation_modulo(drv)
     from pix.hash import sha256
-    expected = sha256(b"fixed:out:sha256:abc123:")
+    expected = sha256(b"fixed:out:sha256:abc123:/nix/store/x")
     assert h == expected
 
 

@@ -80,7 +80,7 @@ assert parse(serialize(drv)) == drv  # 왕복 변환
 **고정 출력 derivation** (단일 출력 `"out"`에 `hash_algo`가 설정된 경우):
 
 ```
-sha256("fixed:out:<hash_algo>:<hash_value>:")
+sha256("fixed:out:<hash_algo>:<hash_value>:<output_path>")
 ```
 
 **일반 derivation**: 출력 경로를 비우고 입력 derivation 경로를 모듈러 해시로 대체한 마스크 복사본을 만든 다음, 결과 ATerm을 해싱합니다.
