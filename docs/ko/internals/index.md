@@ -13,6 +13,7 @@ Nix가 실제로 어떻게 동작하는지 — 형식, 프로토콜, 알고리�
 | [데몬 프로토콜](daemon-protocol.md) | `nix build`와 `nix-store`는 데몬과 어떻게 통신하나? |
 | [Derivation](derivations.md) | `.drv` 파일에는 무엇이 있나? `hashDerivationModulo`는 순환 의존성을 어떻게 해결하나? |
 | [Base32 인코딩](base32.md) | Nix는 왜 표준 base32를 사용하지 않나? 무엇이 다른가? |
+| [오버레이와 부트스트랩](overlays.md) | 오버레이는 고정점을 통해 어떻게 합성되나? stdenv는 GCC를 어떻게 처음부터 빌드하나? |
 
 ## 전체 그림
 

@@ -33,6 +33,19 @@ Once you understand the internals, pixpkgs shows how to build a nixpkgs-like pac
 
 See the [pixpkgs API reference](api/pixpkgs.md) for details.
 
+## Overlays and the bootstrap
+
+The deepest rabbit hole in Nix: how does nixpkgs build GCC when building GCC requires GCC? The answer is **overlays** composed via a **fixed-point** — and it maps surprisingly well to Python's `self` and method override. We explore four different Python implementations, each revealing different failure modes:
+
+| Experiment | Pattern | `final` | `prev` |
+|-----------|---------|---------|--------|
+| [A](https://github.com/jhhuh/pix/tree/master/experiments/a_class_inherit) | Class inheritance | `self` (MRO) | `self._prev` (manual) |
+| [B](https://github.com/jhhuh/pix/tree/master/experiments/b_getattr_chain) | `__getattr__` chain | `_final` ref | `_prev` link |
+| [C](https://github.com/jhhuh/pix/tree/master/experiments/c_lazy_fix) | Lazy fixed-point | `LazyAttrSet` proxy | `prev` dict |
+| [D](https://github.com/jhhuh/pix/tree/master/experiments/d_decorator) | Class decorator | `self` (MRO) | `self._prev` (auto) |
+
+The full analysis — including an infinite recursion trap in class inheritance, the real nixpkgs 7-stage bootstrap, and a comparison of tradeoffs — is in [Overlays & Bootstrap](internals/overlays.md).
+
 ## Reading order
 
 The modules build on each other. Start from the bottom:

@@ -67,3 +67,4 @@ nav:
     - Daemon Protocol: internals/daemon-protocol.md
     - Derivations: internals/derivations.md
     - Base32 Encoding: internals/base32.md
+    - Overlays & Bootstrap: internals/overlays.md

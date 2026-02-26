@@ -33,6 +33,19 @@ Nix의 핵심 알고리즘 — 스토어 경로 해싱, NAR 직렬화, derivatio
 
 자세한 내용은 [pixpkgs API 레퍼런스](api/pixpkgs.md)를 참고하세요.
 
+## 오버레이와 부트스트랩
+
+Nix에서 가장 깊은 토끼굴: GCC를 빌드하려면 GCC가 필요한데, nixpkgs는 이를 어떻게 해결하나? 답은 **고정점(fixed-point)**으로 합성되는 **오버레이** — 그리고 이것은 Python의 `self`와 메서드 오버라이드에 놀랍도록 잘 대응됩니다. 네 가지 Python 구현을 탐구하며, 각각 다른 실패 모드를 드러냅니다:
+
+| 실험 | 패턴 | `final` | `prev` |
+|------|------|---------|--------|
+| [A](https://github.com/jhhuh/pix/tree/master/experiments/a_class_inherit) | 클래스 상속 | `self` (MRO) | `self._prev` (수동) |
+| [B](https://github.com/jhhuh/pix/tree/master/experiments/b_getattr_chain) | `__getattr__` 체인 | `_final` 참조 | `_prev` 링크 |
+| [C](https://github.com/jhhuh/pix/tree/master/experiments/c_lazy_fix) | 지연 고정점 | `LazyAttrSet` 프록시 | `prev` 딕셔너리 |
+| [D](https://github.com/jhhuh/pix/tree/master/experiments/d_decorator) | 클래스 데코레이터 | `self` (MRO) | `self._prev` (자동) |
+
+클래스 상속에서의 무한 재귀 함정, 실제 nixpkgs 7단계 부트스트랩, 그리고 트레이드오프 비교를 포함한 전체 분석은 [오버레이와 부트스트랩](internals/overlays.md)에서 확인하세요.
+
 ## 읽는 순서
 
 모듈들은 서로 의존합니다. 아래에서부터 시작하세요:

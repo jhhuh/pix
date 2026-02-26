@@ -71,3 +71,4 @@ nav:
     - 데몬 프로토콜: internals/daemon-protocol.md
     - 파생(Derivation): internals/derivations.md
     - Base32 인코딩: internals/base32.md
+    - 오버레이와 부트스트랩: internals/overlays.md

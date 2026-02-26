@@ -13,6 +13,7 @@ Each page pairs an explanation of the concept with pointers to the pix source th
 | [Daemon Protocol](daemon-protocol.md) | How do `nix build` and `nix-store` talk to the daemon? |
 | [Derivations](derivations.md) | What's in a `.drv` file? How does `hashDerivationModulo` break the circular dependency? |
 | [Base32 Encoding](base32.md) | Why doesn't Nix use standard base32? What's different? |
+| [Overlays & Bootstrap](overlays.md) | How do overlays compose via fixed-point? How does stdenv bootstrap GCC from scratch? |
 
 ## The big picture
 
