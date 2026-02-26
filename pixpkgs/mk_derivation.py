@@ -56,6 +56,7 @@ def mk_derivation(
     deps: list[Package] | None = None,
     srcs: list[str] | None = None,
     env: dict[str, str] | None = None,
+    output_names: list[str] | None = None,
 ) -> Package:
     """Create a package using the stdenv mkDerivation pattern.
 
@@ -72,6 +73,7 @@ def mk_derivation(
         deps: Additional Package dependencies beyond stdenv.
         srcs: Additional input source store paths.
         env: Package-specific env vars (override defaults).
+        output_names: Output names (default: ["out"]). Must be sorted.
     """
     if name is not None:
         drv_name = name
@@ -84,7 +86,12 @@ def mk_derivation(
     all_deps = [stdenv] + (deps or [])
 
     merged_env = dict(MKDERIVATION_DEFAULTS)
-    merged_env["outputs"] = "out"
+    # Nix puts "out" first in the outputs env var, then the rest sorted.
+    if output_names:
+        rest = sorted(n for n in output_names if n != "out")
+        merged_env["outputs"] = " ".join(["out"] + rest)
+    else:
+        merged_env["outputs"] = "out"
     merged_env["stdenv"] = str(stdenv)
     if pname is not None:
         merged_env["pname"] = pname
@@ -100,4 +107,5 @@ def mk_derivation(
         deps=all_deps,
         srcs=all_srcs,
         env=merged_env,
+        output_names=output_names,
     )

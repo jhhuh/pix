@@ -124,3 +124,9 @@ DEFAULT_NATIVE_BUILD_INPUTS = " ".join([
 UPDATE_AUTOTOOLS_SCRIPT = _src(
     "update-autotools", "update-autotools-gnu-config-scripts.sh",
 )
+
+# ---------------------------------------------------------------------------
+# patchelf (pkgs/development/tools/misc/patchelf/)
+# ---------------------------------------------------------------------------
+
+PATCHELF_SETUP_HOOK = _src("patchelf", "setup-hook.sh")

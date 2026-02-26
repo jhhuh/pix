@@ -58,6 +58,14 @@ Python idioms mapping to Nix:
 - String interpolation → `__str__` returning output path
 - Lazy package attrs → `@cached_property` on PackageSet
 
+## pixpkgs development rules
+
+- **Do NOT inspect .drv files** when implementing bootstrap stages. Never use `nix derivation show` to extract env vars — implement from source understanding.
+- **Read nixpkgs .nix source files** (`pkgs/stdenv/linux/default.nix` and relevant package `.nix` files) to understand the logic. The nixpkgs source is accessible at the flake input path (find with `nix eval .#inputs.nixpkgs.outPath` or browse `pkgs/` in the store).
+- **The reference nixpkgs** is pinned in `flake.lock` (nixos-24.11 branch). All expected hashes are relative to this revision.
+- **Use pix library for hash computation** — the repo has all machinery to compute derivation hashes from scratch (drv.py, store_path.py, hash.py). Verify by computing in Python, not by querying nix-store.
+- Understand WHY each env var and dependency exists, don't mechanically copy.
+
 ## Key gotchas
 
 - Type prefix has NO trailing colon when references list is empty (`text` not `text:`)
