@@ -1,0 +1,1472 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Explore Nix internals through readable Python">
+      
+      
+      
+      
+        <link rel="prev" href="../base32/">
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+    
+    
+      
+        <title>Overlays & Bootstrap - pix</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.8c3ca2c6.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#overlays-and-the-bootstrap-fixed-point" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="pix" class="md-header__button md-logo" aria-label="pix" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            pix
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Overlays & Bootstrap
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="cyan"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="Select language">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="/pix/" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="/pix/ko/" hreflang="ko" class="md-select__link">
+              한국어
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/jhhuh/pix" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="pix" class="md-nav__button md-logo" aria-label="pix" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    pix
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/jhhuh/pix" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CLI Reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../api/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    API Reference
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/base32/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pix.base32
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/hash/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pix.hash
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/nar/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pix.nar
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/store_path/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pix.store_path
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/derivation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pix.derivation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/daemon/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pix.daemon
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/pixpkgs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pixpkgs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Internals
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Internals
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../store-paths/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Store Paths
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nar-format/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    NAR Format
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../daemon-protocol/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Daemon Protocol
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../derivations/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Derivations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../base32/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Base32 Encoding
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Overlays & Bootstrap
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Overlays & Bootstrap
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-nix-overlay-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Nix overlay model
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Nix overlay model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-two-arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why two arguments?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#four-python-implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Four Python implementations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Four Python implementations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-class-inheritance" class="md-nav__link">
+    <span class="md-ellipsis">
+      A: Class inheritance
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b-__getattr__-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      B: __getattr__ chain
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c-lazy-fixed-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      C: Lazy fixed-point
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d-class-decorator" class="md-nav__link">
+    <span class="md-ellipsis">
+      D: Class decorator
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-infinite-recursion-trap" class="md-nav__link">
+    <span class="md-ellipsis">
+      The infinite recursion trap
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The infinite recursion trap">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-cycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      The cycle
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-super-doesnt-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why super() doesn't help
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-cached_property-doesnt-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why @cached_property doesn't help
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-root-cause" class="md-nav__link">
+    <span class="md-ellipsis">
+      The root cause
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comparison
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Comparison">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nix-fidelity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Nix fidelity
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#static-vs-dynamic-composition" class="md-nav__link">
+    <span class="md-ellipsis">
+      Static vs dynamic composition
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mutability-hazards" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mutability hazards
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-to-use-which" class="md-nav__link">
+    <span class="md-ellipsis">
+      When to use which
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-the-nixpkgs-stdenv-bootstrap" class="md-nav__link">
+    <span class="md-ellipsis">
+      Appendix: The nixpkgs stdenv bootstrap
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Appendix: The nixpkgs stdenv bootstrap">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-seed" class="md-nav__link">
+    <span class="md-ellipsis">
+      The seed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-stages" class="md-nav__link">
+    <span class="md-ellipsis">
+      The stages
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#three-transitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Three transitions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-overlay-pattern-in-action" class="md-nav__link">
+    <span class="md-ellipsis">
+      The overlay pattern in action
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-hello-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      The hello package
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="overlays-and-the-bootstrap-fixed-point">Overlays and the Bootstrap Fixed-Point<a class="headerlink" href="#overlays-and-the-bootstrap-fixed-point" title="Permanent link">&para;</a></h1>
+<p>Nix's overlay system is how nixpkgs composes 100,000+ packages into a single attribute set — and how the stdenv bootstrap rebuilds the toolchain from scratch. The core mechanism is <strong>fixed-point evaluation</strong>: overlays reference the final result before it exists, and laziness makes it work.</p>
+<p>This page explores the theory through four Python implementations, each revealing different aspects of how the pattern works — and different ways it can break.</p>
+<h2 id="the-nix-overlay-model">The Nix overlay model<a class="headerlink" href="#the-nix-overlay-model" title="Permanent link">&para;</a></h2>
+<p>An overlay is a function of two arguments:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="ss">overlay</span> <span class="o">=</span> final<span class="p">:</span> prev<span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  <span class="ss">tools</span> <span class="o">=</span> mkTools <span class="p">{</span> <span class="ss">shell</span> <span class="o">=</span> prev<span class="o">.</span>shell<span class="p">;</span> <span class="p">};</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">};</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Meaning</th>
+<th>Used for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>final</code></td>
+<td>The completed result (after all overlays)</td>
+<td>Late binding: <code>final.gcc</code> gets the most-derived version</td>
+</tr>
+<tr>
+<td><code>prev</code></td>
+<td>The previous layer (before this overlay)</td>
+<td>Build deps: <code>prev.shell</code> gets the version before this override</td>
+</tr>
+</tbody>
+</table>
+<p>Overlays are composed into a single function via <code>lib.composeExtensions</code>, then evaluated via <code>lib.fix</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="ss">fix</span> <span class="o">=</span> f<span class="p">:</span> <span class="k">let</span> <span class="ss">x</span> <span class="o">=</span> f x<span class="p">;</span> <span class="k">in</span> x<span class="p">;</span>
+</code></pre></div>
+<p>The result <code>x</code> is passed to <code>f</code> as its own argument — a circular definition that works because Nix is lazy. Attribute access triggers evaluation on demand.</p>
+<h3 id="why-two-arguments">Why two arguments?<a class="headerlink" href="#why-two-arguments" title="Permanent link">&para;</a></h3>
+<p>A single argument isn't enough. Consider a 3-stage bootstrap:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Stage 0:  shell-v0, tools-v0, app (uses shell + tools)
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Stage 1:  tools-v1 (rebuilt with stage0&#39;s shell)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Stage 2:  shell-v1 (rebuilt with stage1&#39;s tools)
+</code></pre></div>
+<p>Stage 2 overrides <code>shell</code> and builds it using <code>prev.tools</code> (= stage 1's tools). But stage 1's <code>tools</code> override was built using <code>prev.shell</code> (= stage 0's shell). If stage 1 used <code>final.shell</code> instead of <code>prev.shell</code>, it would see stage 2's override — which depends on stage 1's tools — creating a cycle.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>                    ┌──────────── cycle! ────────────┐
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>                    │                                │
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>                    v                                │
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>final.shell ──&gt; stage2.shell(final.tools)           │
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>                    │                                │
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>                    v                                │
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>            final.tools ──&gt; stage1.tools(final.shell)┘
+</code></pre></div>
+<p>The <code>prev</code> argument breaks the cycle: each override builds with the <em>previous</em> stage's value, not the final one. The <code>final</code> argument provides open recursion: non-overridden packages like <code>app</code> reference <code>final.shell</code> and <code>final.tools</code>, automatically picking up the latest overrides.</p>
+<hr />
+<h2 id="four-python-implementations">Four Python implementations<a class="headerlink" href="#four-python-implementations" title="Permanent link">&para;</a></h2>
+<p>We implemented the same 3-stage bootstrap in four different ways. All four pass identical tests — same late-binding behavior, same override semantics. But each has different failure modes.</p>
+<p>Source: <a href="https://github.com/jhhuh/pix/tree/master/experiments"><code>experiments/</code></a> — each subfolder is self-contained with a bootstrap and test file.</p>
+<h3 id="a-class-inheritance">A: Class inheritance<a class="headerlink" href="#a-class-inheritance" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span> <span class="nc">Stage0</span><span class="p">(</span><span class="n">PackageSet</span><span class="p">):</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="k">def</span> <span class="nf">shell</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>        <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;shell&quot;</span><span class="p">,</span> <span class="n">builder</span><span class="o">=</span><span class="s2">&quot;/bin/sh&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="k">def</span> <span class="nf">tools</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">shell</span><span class="p">],</span> <span class="o">...</span><span class="p">)</span>  <span class="c1"># self = final</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="k">def</span> <span class="nf">app</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>        <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">shell</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tools</span><span class="p">],</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="k">class</span> <span class="nc">Stage1</span><span class="p">(</span><span class="n">Stage0</span><span class="p">):</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>    <span class="k">def</span> <span class="nf">_prev</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>        <span class="k">return</span> <span class="n">Stage0</span><span class="p">()</span>  <span class="c1"># prev = separate instance</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>    <span class="k">def</span> <span class="nf">tools</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>        <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools-v1&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_prev</span><span class="o">.</span><span class="n">shell</span><span class="p">],</span> <span class="o">...</span><span class="p">)</span>
+</code></pre></div>
+<p><strong><code>final</code></strong> = <code>self</code>. Python's MRO resolves <code>self.shell</code> to the most-derived override — exactly like Nix's <code>final.shell</code>.</p>
+<p><strong><code>prev</code></strong> = <code>self._prev</code>. A <code>@cached_property</code> that creates a fresh instance of the parent class.</p>
+<p><strong>Lesson learned:</strong> The first attempt used only <code>self</code> and no <code>_prev</code> — see <a href="#the-infinite-recursion-trap">The infinite recursion trap</a> below.</p>
+<h3 id="b-__getattr__-chain">B: <code>__getattr__</code> chain<a class="headerlink" href="#b-__getattr__-chain" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">base</span> <span class="o">=</span> <span class="n">AttrSet</span><span class="p">({</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="s2">&quot;shell&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">final</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;shell&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">),</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="s2">&quot;tools&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">final</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="n">final</span><span class="o">.</span><span class="n">shell</span><span class="p">],</span> <span class="o">...</span><span class="p">),</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="s2">&quot;app&quot;</span><span class="p">:</span>   <span class="k">lambda</span> <span class="n">final</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="n">final</span><span class="o">.</span><span class="n">shell</span><span class="p">,</span> <span class="n">final</span><span class="o">.</span><span class="n">tools</span><span class="p">],</span> <span class="o">...</span><span class="p">),</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="p">})</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">stage1</span> <span class="o">=</span> <span class="n">Overlay</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">final</span><span class="p">,</span> <span class="n">prev</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="s2">&quot;tools&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">final</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools-v1&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="n">prev</span><span class="o">.</span><span class="n">shell</span><span class="p">],</span> <span class="o">...</span><span class="p">),</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="p">})</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="n">stage1</span><span class="o">.</span><span class="n">_set_final</span><span class="p">(</span><span class="n">stage1</span><span class="p">)</span>
+</code></pre></div>
+<p><strong><code>final</code></strong> = a <code>_final</code> reference propagated down the chain. Every node in the chain points to the outermost <code>Overlay</code>.</p>
+<p><strong><code>prev</code></strong> = the <code>_prev</code> link. <code>__getattr__</code> delegates to <code>_prev</code> for attributes not overridden in the current layer.</p>
+<p><strong>Lesson learned:</strong> The <code>_final</code> reference is mutable shared state. If you compose the same <code>AttrSet</code> into two different chains, the second <code>_set_final()</code> corrupts the first.</p>
+<h3 id="c-lazy-fixed-point">C: Lazy fixed-point<a class="headerlink" href="#c-lazy-fixed-point" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">def</span> <span class="nf">base_overlay</span><span class="p">(</span><span class="n">final</span><span class="p">,</span> <span class="n">prev</span><span class="p">):</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="k">return</span> <span class="p">{</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>        <span class="s2">&quot;shell&quot;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;shell&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">),</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>        <span class="s2">&quot;tools&quot;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="n">final</span><span class="o">.</span><span class="n">shell</span><span class="p">],</span> <span class="o">...</span><span class="p">),</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>        <span class="s2">&quot;app&quot;</span><span class="p">:</span>   <span class="k">lambda</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="n">final</span><span class="o">.</span><span class="n">shell</span><span class="p">,</span> <span class="n">final</span><span class="o">.</span><span class="n">tools</span><span class="p">],</span> <span class="o">...</span><span class="p">),</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="p">}</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="k">def</span> <span class="nf">stage1_overlay</span><span class="p">(</span><span class="n">final</span><span class="p">,</span> <span class="n">prev</span><span class="p">):</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;tools&quot;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools-v1&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="n">prev</span><span class="p">[</span><span class="s2">&quot;shell&quot;</span><span class="p">]()],</span> <span class="o">...</span><span class="p">)}</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="n">result</span> <span class="o">=</span> <span class="n">fix</span><span class="p">(</span><span class="n">compose_overlays</span><span class="p">([</span><span class="n">base_overlay</span><span class="p">,</span> <span class="n">stage1_overlay</span><span class="p">]))</span>
+</code></pre></div>
+<p><strong><code>final</code></strong> = the <code>LazyAttrSet</code> passed to overlay functions by <code>fix()</code>. Attribute access triggers thunk evaluation.</p>
+<p><strong><code>prev</code></strong> = a plain dict of thunks from previous layers. Access: <code>prev["name"]()</code>.</p>
+<p><strong>Lesson learned:</strong> Two different APIs for the same concept: <code>final.shell</code> (attribute access) vs <code>prev["shell"]()</code> (dict lookup + call). This is a usability gap — typos in string keys fail at runtime, not import time.</p>
+<h3 id="d-class-decorator">D: Class decorator<a class="headerlink" href="#d-class-decorator" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">class</span> <span class="nc">Stage0</span><span class="p">(</span><span class="n">PackageSet</span><span class="p">):</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="k">def</span> <span class="nf">shell</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;shell&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="k">def</span> <span class="nf">tools</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">shell</span><span class="p">],</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="k">def</span> <span class="nf">app</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>   <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">shell</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tools</span><span class="p">],</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="nd">@overlay</span><span class="p">(</span><span class="n">tools</span><span class="o">=</span><span class="k">lambda</span> <span class="bp">self</span><span class="p">,</span> <span class="n">prev</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools-v1&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="n">prev</span><span class="o">.</span><span class="n">shell</span><span class="p">],</span> <span class="o">...</span><span class="p">))</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="k">class</span> <span class="nc">Stage1</span><span class="p">(</span><span class="n">Stage0</span><span class="p">):</span> <span class="k">pass</span>
+</code></pre></div>
+<p><strong><code>final</code></strong> = <code>self</code> — same MRO-based late binding as Experiment A.</p>
+<p><strong><code>prev</code></strong> = <code>self._prev</code> — injected by the <code>@overlay</code> decorator automatically.</p>
+<p><strong>Lesson learned:</strong> The decorator hides all plumbing (creating <code>_prev</code>, wrapping as <code>@cached_property</code>), but <code>type(cls.__name__, (cls,), attrs)</code> creates a dynamic class. The decorated <code>Stage1</code> is not the class you wrote — it's a generated subclass.</p>
+<hr />
+<h2 id="the-infinite-recursion-trap">The infinite recursion trap<a class="headerlink" href="#the-infinite-recursion-trap" title="Permanent link">&para;</a></h2>
+<p>The most instructive failure came from Experiment A. The first attempt used <code>self</code> for everything:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">class</span> <span class="nc">Stage1</span><span class="p">(</span><span class="n">Stage0</span><span class="p">):</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="k">def</span> <span class="nf">tools</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>        <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools-v1&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">shell</span><span class="p">],</span> <span class="o">...</span><span class="p">)</span>  <span class="c1"># ← self.shell</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="k">class</span> <span class="nc">Stage2</span><span class="p">(</span><span class="n">Stage1</span><span class="p">):</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="k">def</span> <span class="nf">shell</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>        <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;shell-v1&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tools</span><span class="p">],</span> <span class="o">...</span><span class="p">)</span>  <span class="c1"># ← self.tools</span>
+</code></pre></div>
+<p>This looks natural — but produces <code>RecursionError</code>.</p>
+<h3 id="the-cycle">The cycle<a class="headerlink" href="#the-cycle" title="Permanent link">&para;</a></h3>
+<p>When you access <code>Stage2().app</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Stage2().app
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>  → self.shell                  (MRO → Stage2.shell)
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    → self.tools                (MRO → Stage1.tools)
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>      → self.shell              (MRO → Stage2.shell)
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>        → self.tools            (MRO → Stage1.tools)
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>          → ...                 RecursionError!
+</code></pre></div>
+<p>Stage2.shell needs <code>self.tools</code>. Stage1.tools needs <code>self.shell</code>. Both resolve via MRO to the most-derived override. The cycle is fundamental — not a bug in the code, but a consequence of conflating <code>final</code> and <code>prev</code> into a single reference.</p>
+<h3 id="why-super-doesnt-help">Why <code>super()</code> doesn't help<a class="headerlink" href="#why-super-doesnt-help" title="Permanent link">&para;</a></h3>
+<p>Python's <code>super()</code> changes which class the method is looked up on, but <code>self</code> remains the most-derived instance:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">class</span> <span class="nc">Stage2</span><span class="p">(</span><span class="n">Stage1</span><span class="p">):</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="k">def</span> <span class="nf">shell</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>        <span class="c1"># super().tools → Stage1.tools.__get__(self, Stage2)</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>        <span class="c1"># But Stage1.tools uses self.shell → Stage2.shell → cycle!</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>        <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">tools</span><span class="p">])</span>
+</code></pre></div>
+<h3 id="why-cached_property-doesnt-help">Why <code>@cached_property</code> doesn't help<a class="headerlink" href="#why-cached_property-doesnt-help" title="Permanent link">&para;</a></h3>
+<p><code>@cached_property</code> stores the result in <code>instance.__dict__</code> on first access. But the recursion happens <em>during</em> the first computation — before any value is cached:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>self.shell  [start computing — not cached yet]
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  → self.tools  [start computing — not cached yet]
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    → self.shell  [STILL computing — nothing cached to return]
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>      → RecursionError
+</code></pre></div>
+<p>The cache only breaks cycles for values that have <em>already been computed</em>. It cannot break cycles during initial computation.</p>
+<h3 id="the-root-cause">The root cause<a class="headerlink" href="#the-root-cause" title="Permanent link">&para;</a></h3>
+<p>Nix overlays have two arguments. Python's <code>self</code> is one. The fix: add <code>self._prev</code> as the second.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">class</span> <span class="nc">Stage2</span><span class="p">(</span><span class="n">Stage1</span><span class="p">):</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>    <span class="k">def</span> <span class="nf">_prev</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>        <span class="k">return</span> <span class="n">Stage1</span><span class="p">()</span>  <span class="c1"># ← separate instance of previous stage</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>    <span class="k">def</span> <span class="nf">shell</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>        <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_prev</span><span class="o">.</span><span class="n">tools</span><span class="p">])</span>  <span class="c1"># ← prev, not final</span>
+</code></pre></div>
+<p>Now <code>self._prev.tools</code> creates a <code>Stage1()</code> instance, which resolves <code>tools</code> on itself (not on the Stage2 instance), breaking the cycle.</p>
+<div class="admonition note">
+<p class="admonition-title">Rule of thumb</p>
+<p><strong>Overridden methods</strong> use <code>self._prev.X</code> for build dependencies (previous stage's values).
+<strong>Inherited methods</strong> use <code>self.X</code> — late binding gives open recursion for free.</p>
+<p>The same rule applies in Nix: overlays use <code>prev.X</code> for inputs they're rebuilding against, and <code>final.X</code> for attributes they want the final version of.</p>
+</div>
+<hr />
+<h2 id="comparison">Comparison<a class="headerlink" href="#comparison" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align: center;">A: Inheritance</th>
+<th style="text-align: center;">B: <code>__getattr__</code></th>
+<th style="text-align: center;">C: Lazy Fix</th>
+<th style="text-align: center;">D: Decorator</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lines (infra + bootstrap)</td>
+<td style="text-align: center;">153</td>
+<td style="text-align: center;">198</td>
+<td style="text-align: center;">169</td>
+<td style="text-align: center;">130</td>
+</tr>
+<tr>
+<td><code>final</code> mechanism</td>
+<td style="text-align: center;"><code>self</code> (MRO)</td>
+<td style="text-align: center;"><code>_final</code> ref</td>
+<td style="text-align: center;"><code>LazyAttrSet</code> proxy</td>
+<td style="text-align: center;"><code>self</code> (MRO)</td>
+</tr>
+<tr>
+<td><code>prev</code> mechanism</td>
+<td style="text-align: center;"><code>self._prev</code> (manual)</td>
+<td style="text-align: center;"><code>_prev</code> chain</td>
+<td style="text-align: center;"><code>prev</code> dict</td>
+<td style="text-align: center;"><code>self._prev</code> (auto)</td>
+</tr>
+<tr>
+<td>IDE completion</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">no</td>
+<td style="text-align: center;">no</td>
+<td style="text-align: center;">partial</td>
+</tr>
+<tr>
+<td>Type checking</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">no</td>
+<td style="text-align: center;">no</td>
+<td style="text-align: center;">partial</td>
+</tr>
+<tr>
+<td>Dynamic composition</td>
+<td style="text-align: center;">no</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td>Recursion detection</td>
+<td style="text-align: center;">none (hangs)</td>
+<td style="text-align: center;">none (hangs)</td>
+<td style="text-align: center;">yes (diagnostic)</td>
+<td style="text-align: center;">none (hangs)</td>
+</tr>
+<tr>
+<td>Nix fidelity</td>
+<td style="text-align: center;">low</td>
+<td style="text-align: center;">medium</td>
+<td style="text-align: center;">high</td>
+<td style="text-align: center;">medium</td>
+</tr>
+<tr>
+<td>Boilerplate per overlay</td>
+<td style="text-align: center;">~10 lines</td>
+<td style="text-align: center;">~5 lines</td>
+<td style="text-align: center;">~5 lines</td>
+<td style="text-align: center;">~3 lines</td>
+</tr>
+</tbody>
+</table>
+<h3 id="nix-fidelity">Nix fidelity<a class="headerlink" href="#nix-fidelity" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>C</strong> is a line-for-line translation of <code>lib.fix</code> and <code>lib.composeExtensions</code>.</li>
+<li><strong>B</strong> captures the same semantics dynamically but wraps them in Python objects.</li>
+<li><strong>D</strong> maps overlays to decorators — same semantics, different syntax.</li>
+<li><strong>A</strong> maps overlays to class inheritance — the furthest departure. The fixed-point is implicit in <code>self</code>, and <code>prev</code> requires manual plumbing.</li>
+</ul>
+<h3 id="static-vs-dynamic-composition">Static vs dynamic composition<a class="headerlink" href="#static-vs-dynamic-composition" title="Permanent link">&para;</a></h3>
+<p>In <strong>A</strong> and <strong>D</strong>, the overlay chain is fixed at class definition time. You can't add a new stage between Stage1 and Stage2 without editing source.</p>
+<p>In <strong>B</strong> and <strong>C</strong>, overlays are plain functions composed at runtime. You can programmatically build overlay lists — which is exactly what nixpkgs does with <code>config.nixpkgs.overlays</code>.</p>
+<h3 id="mutability-hazards">Mutability hazards<a class="headerlink" href="#mutability-hazards" title="Permanent link">&para;</a></h3>
+<p>Python objects are mutable. Each pattern has different exposure:</p>
+<ul>
+<li><strong>A</strong>: <code>self._prev</code> creates fresh instances, so stages don't share mutable state. But if two codepaths instantiate <code>Stage2()</code> independently, they get independent <code>_prev</code> chains — correct but potentially wasteful.</li>
+<li><strong>B</strong>: The <code>_final</code> reference is mutable shared state on the chain. Composing the same <code>AttrSet</code> into two chains causes the second <code>_set_final()</code> to overwrite the first.</li>
+<li><strong>C</strong>: Each <code>fix()</code> call creates a new <code>LazyAttrSet</code> with its own cache. But <code>prev</code> is a shared dict — if an overlay mutates it (instead of merging), earlier layers get corrupted.</li>
+<li><strong>D</strong>: Same as A internally — the decorator creates <code>_prev</code> the same way.</li>
+</ul>
+<h3 id="when-to-use-which">When to use which<a class="headerlink" href="#when-to-use-which" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>A</strong> — when the chain is small, static, and you want full IDE support.</li>
+<li><strong>B</strong> — when overlays must be composed dynamically (plugin systems).</li>
+<li><strong>C</strong> — when faithfully modeling Nix semantics (educational use, porting Nix code).</li>
+<li><strong>D</strong> — best balance for Python projects: minimal boilerplate, IDE-friendly base classes, declarative overlay syntax.</li>
+</ul>
+<hr />
+<h2 id="appendix-the-nixpkgs-stdenv-bootstrap">Appendix: The nixpkgs stdenv bootstrap<a class="headerlink" href="#appendix-the-nixpkgs-stdenv-bootstrap" title="Permanent link">&para;</a></h2>
+<p>The real nixpkgs stdenv bootstrap is a chain of 7 stages, each a specialized overlay. It solves a chicken-and-egg problem: to build GCC you need glibc, but to build glibc you need GCC.</p>
+<h3 id="the-seed">The seed<a class="headerlink" href="#the-seed" title="Permanent link">&para;</a></h3>
+<p>Everything starts from a single prebuilt tarball: <code>bootstrap-tools</code>. It contains 125 binaries (GCC, coreutils, binutils, bash, etc.) plus glibc and support libraries. This is the only external binary dependency — every other package is rebuilt from source.</p>
+<h3 id="the-stages">The stages<a class="headerlink" href="#the-stages" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>What it overrides</th>
+<th>Key build</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0</strong></td>
+<td>nothing (seed)</td>
+<td>Dummy stdenv with bootstrap-tools as compiler</td>
+</tr>
+<tr>
+<td><strong>1</strong></td>
+<td>gcc-wrapper, fetchurl</td>
+<td>Binutils from source, perl (for later stages)</td>
+</tr>
+<tr>
+<td><strong>xgcc</strong></td>
+<td>gcc (first rebuild)</td>
+<td>GCC compiled from source (but linked against bootstrap glibc)</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td><strong>glibc</strong></td>
+<td>Real glibc-2.40 compiled with xgcc (the libc transition)</td>
+</tr>
+<tr>
+<td><strong>3</strong></td>
+<td><strong>gcc</strong> (final)</td>
+<td>Final GCC compiled with the real glibc (the compiler transition)</td>
+</tr>
+<tr>
+<td><strong>4</strong></td>
+<td>coreutils, bash, sed, grep, ...</td>
+<td>All standard tools from source (the tools transition)</td>
+</tr>
+<tr>
+<td><strong>final</strong></td>
+<td>assembles everything</td>
+<td>Production stdenv — zero references to bootstrap-tools</td>
+</tr>
+</tbody>
+</table>
+<h3 id="three-transitions">Three transitions<a class="headerlink" href="#three-transitions" title="Permanent link">&para;</a></h3>
+<p>The bootstrap solves the circular dependency through progressive replacement:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>bootstrap-tools (prebuilt)
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>        │
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>   ┌────┴────┐
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>   │ Stage 1 │  binutils from source
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>   └────┬────┘
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>   ┌────┴────┐
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>   │  xgcc   │  GCC from source (but links against bootstrap glibc)
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>   └────┬────┘
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>   ┌────┴─────────────────────────────┐
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>   │ Stage 2: THE LIBC TRANSITION     │  xgcc compiles real glibc
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>   └────┬─────────────────────────────┘
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>   ┌────┴─────────────────────────────┐
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>   │ Stage 3: THE COMPILER TRANSITION │  real glibc compiles final GCC
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>   └────┬─────────────────────────────┘
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>   ┌────┴─────────────────────────────┐
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>   │ Stage 4: THE TOOLS TRANSITION    │  final GCC rebuilds coreutils, bash, ...
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>   └────┬─────────────────────────────┘
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>   ┌────┴────┐
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>   │  final  │  all components from source, no bootstrap refs
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>   └─────────┘
+</code></pre></div>
+<p><strong>Stage xgcc</strong> is the subtlest. The xgcc binary itself is linked against junk from bootstrap-tools — but that doesn't matter. What matters is the <em>code xgcc emits</em>. That code will run against the real glibc built in stage 2.</p>
+<h3 id="the-overlay-pattern-in-action">The overlay pattern in action<a class="headerlink" href="#the-overlay-pattern-in-action" title="Permanent link">&para;</a></h3>
+<p>Each stage is an overlay: it overrides some packages and inherits the rest from the previous stage. Stage 2 overrides glibc but inherits xgcc from the xgcc stage. Stage 3 overrides gcc but inherits glibc from stage 2.</p>
+<p>This is exactly the pattern our experiments demonstrate:</p>
+<ul>
+<li><code>prev.tools</code> → "use the compiler from the previous stage to build glibc"</li>
+<li><code>final.gcc</code> → "when hello uses gcc, it gets the most-derived version"</li>
+</ul>
+<p>The final stdenv enforces completeness with <code>disallowedRequisites</code>: any reference to bootstrap-tools in the final output is a build failure. This guarantees the bootstrap is complete — every component has been rebuilt from source.</p>
+<h3 id="the-hello-package">The hello package<a class="headerlink" href="#the-hello-package" title="Permanent link">&para;</a></h3>
+<p>The canonical test: can the bootstrap produce a working <code>hello</code>?</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>hello-2.12.2.drv
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>  builder: bash-5.3p3     (rebuilt in stage 4)
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>  stdenv:  stdenv-linux    (the final stdenv)
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>  source:  hello-2.12.2.tar.gz (fetched via fetchurl)
+</code></pre></div>
+<p>All 38 input derivations of the final stdenv trace back, through the overlay chain, to the single bootstrap-tools tarball.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.sections", "navigation.expand", "navigation.indexes", "toc.integrate"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.525ec568.min.js"></script>
+      
+    
+  </body>
+</html>

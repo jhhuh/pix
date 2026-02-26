@@ -347,7 +347,7 @@
         <li class="md-nav__item">
   <a href="#_1" class="md-nav__link">
     <span class="md-ellipsis">
-      읽는 순서
+      오버레이와 부트스트랩
     </span>
   </a>
   
@@ -356,7 +356,7 @@
         <li class="md-nav__item">
   <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
-      직접 해보기
+      읽는 순서
     </span>
   </a>
   
@@ -365,7 +365,7 @@
         <li class="md-nav__item">
   <a href="#_3" class="md-nav__link">
     <span class="md-ellipsis">
-      검증
+      직접 해보기
     </span>
   </a>
   
@@ -373,6 +373,15 @@
       
         <li class="md-nav__item">
   <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      검증
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
     <span class="md-ellipsis">
       이 문서 사용법
     </span>
@@ -657,6 +666,8 @@
       
         
       
+        
+      
     
     
       
@@ -807,6 +818,27 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="internals/overlays/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    오버레이와 부트스트랩
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -925,7 +957,46 @@
 </tbody>
 </table>
 <p>자세한 내용은 <a href="api/pixpkgs/">pixpkgs API 레퍼런스</a>를 참고하세요.</p>
-<h2 id="_1">읽는 순서<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<h2 id="_1">오버레이와 부트스트랩<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>Nix에서 가장 깊은 토끼굴: GCC를 빌드하려면 GCC가 필요한데, nixpkgs는 이를 어떻게 해결하나? 답은 <strong>고정점(fixed-point)</strong>으로 합성되는 <strong>오버레이</strong> — 그리고 이것은 Python의 <code>self</code>와 메서드 오버라이드에 놀랍도록 잘 대응됩니다. 네 가지 Python 구현을 탐구하며, 각각 다른 실패 모드를 드러냅니다:</p>
+<table>
+<thead>
+<tr>
+<th>실험</th>
+<th>패턴</th>
+<th><code>final</code></th>
+<th><code>prev</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/jhhuh/pix/tree/master/experiments/a_class_inherit">A</a></td>
+<td>클래스 상속</td>
+<td><code>self</code> (MRO)</td>
+<td><code>self._prev</code> (수동)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/jhhuh/pix/tree/master/experiments/b_getattr_chain">B</a></td>
+<td><code>__getattr__</code> 체인</td>
+<td><code>_final</code> 참조</td>
+<td><code>_prev</code> 링크</td>
+</tr>
+<tr>
+<td><a href="https://github.com/jhhuh/pix/tree/master/experiments/c_lazy_fix">C</a></td>
+<td>지연 고정점</td>
+<td><code>LazyAttrSet</code> 프록시</td>
+<td><code>prev</code> 딕셔너리</td>
+</tr>
+<tr>
+<td><a href="https://github.com/jhhuh/pix/tree/master/experiments/d_decorator">D</a></td>
+<td>클래스 데코레이터</td>
+<td><code>self</code> (MRO)</td>
+<td><code>self._prev</code> (자동)</td>
+</tr>
+</tbody>
+</table>
+<p>클래스 상속에서의 무한 재귀 함정, 실제 nixpkgs 7단계 부트스트랩, 그리고 트레이드오프 비교를 포함한 전체 분석은 <a href="internals/overlays/">오버레이와 부트스트랩</a>에서 확인하세요.</p>
+<h2 id="_2">읽는 순서<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>모듈들은 서로 의존합니다. 아래에서부터 시작하세요:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pix (Nix 내부 구조):
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  1. base32.py        ← 가장 단순: 인코딩만
@@ -941,7 +1012,7 @@
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>  9. realize.py       ← .drv를 스토어에 쓰고 데몬으로 빌드
 </code></pre></div>
 <p>각 pix 파일은 자체적으로 완결되며 150줄 미만입니다. 전체 코드베이스를 한 번에 읽을 수 있습니다.</p>
-<h2 id="_2">직접 해보기<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<h2 id="_3">직접 해보기<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>nix<span class="w"> </span>develop
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># pix가 nix와 정확히 같은 해시를 계산하는지 확인</span>
@@ -954,10 +1025,10 @@
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>add-text<span class="w"> </span>hello.txt<span class="w"> </span><span class="s2">&quot;hello world&quot;</span>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>python<span class="w"> </span>-m<span class="w"> </span>pix<span class="w"> </span>drv-show<span class="w"> </span>/nix/store/...-hello.drv
 </code></pre></div>
-<h2 id="_3">검증<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<h2 id="_4">검증<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>pixpkgs/tests/<span class="w"> </span>-v<span class="w">   </span><span class="c1"># 41개 테스트, 모두 실제 nix와 비교</span>
 </code></pre></div>
-<h2 id="_4">이 문서 사용법<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<h2 id="_5">이 문서 사용법<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong><a href="internals/">내부 구조</a></strong> — 여기서 시작하세요. 다이어그램, 헥스 덤프, 프로토콜 트레이스와 함께 <em>Nix가 어떻게 동작하는지</em> 설명합니다.</li>
 <li><strong><a href="api/">API 레퍼런스</a></strong> — 각 모듈의 함수 시그니처와 사용 예제.</li>

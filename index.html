@@ -343,6 +343,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#overlays-and-the-bootstrap" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overlays and the bootstrap
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#reading-order" class="md-nav__link">
     <span class="md-ellipsis">
       Reading order
@@ -655,6 +664,8 @@
       
         
       
+        
+      
     
     
       
@@ -805,6 +816,27 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="internals/overlays/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overlays & Bootstrap
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -923,6 +955,45 @@
 </tbody>
 </table>
 <p>See the <a href="api/pixpkgs/">pixpkgs API reference</a> for details.</p>
+<h2 id="overlays-and-the-bootstrap">Overlays and the bootstrap<a class="headerlink" href="#overlays-and-the-bootstrap" title="Permanent link">&para;</a></h2>
+<p>The deepest rabbit hole in Nix: how does nixpkgs build GCC when building GCC requires GCC? The answer is <strong>overlays</strong> composed via a <strong>fixed-point</strong> — and it maps surprisingly well to Python's <code>self</code> and method override. We explore four different Python implementations, each revealing different failure modes:</p>
+<table>
+<thead>
+<tr>
+<th>Experiment</th>
+<th>Pattern</th>
+<th><code>final</code></th>
+<th><code>prev</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/jhhuh/pix/tree/master/experiments/a_class_inherit">A</a></td>
+<td>Class inheritance</td>
+<td><code>self</code> (MRO)</td>
+<td><code>self._prev</code> (manual)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/jhhuh/pix/tree/master/experiments/b_getattr_chain">B</a></td>
+<td><code>__getattr__</code> chain</td>
+<td><code>_final</code> ref</td>
+<td><code>_prev</code> link</td>
+</tr>
+<tr>
+<td><a href="https://github.com/jhhuh/pix/tree/master/experiments/c_lazy_fix">C</a></td>
+<td>Lazy fixed-point</td>
+<td><code>LazyAttrSet</code> proxy</td>
+<td><code>prev</code> dict</td>
+</tr>
+<tr>
+<td><a href="https://github.com/jhhuh/pix/tree/master/experiments/d_decorator">D</a></td>
+<td>Class decorator</td>
+<td><code>self</code> (MRO)</td>
+<td><code>self._prev</code> (auto)</td>
+</tr>
+</tbody>
+</table>
+<p>The full analysis — including an infinite recursion trap in class inheritance, the real nixpkgs 7-stage bootstrap, and a comparison of tradeoffs — is in <a href="internals/overlays/">Overlays &amp; Bootstrap</a>.</p>
 <h2 id="reading-order">Reading order<a class="headerlink" href="#reading-order" title="Permanent link">&para;</a></h2>
 <p>The modules build on each other. Start from the bottom:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pix (Nix internals):

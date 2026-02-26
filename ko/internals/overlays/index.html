@@ -1,0 +1,1429 @@
+
+<!doctype html>
+<html lang="ko" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="읽기 쉬운 Python으로 Nix 내부 구조 탐구하기">
+      
+      
+      
+        <link rel="canonical" href="https://jhhuh.github.io/pix/ko/internals/overlays/">
+      
+      
+        <link rel="prev" href="../base32/">
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+    
+    
+      
+        <title>오버레이와 부트스트랩 - pix</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.8c3ca2c6.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          콘텐츠로 이동
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="상단/헤더">
+    <a href="../.." title="pix" class="md-header__button md-logo" aria-label="pix" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            pix
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              오버레이와 부트스트랩
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="cyan"  aria-label="다크 모드로 전환"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="다크 모드로 전환" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="cyan"  aria-label="라이트 모드로 전환"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="라이트 모드로 전환" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="언어설정">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="/pix/" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="/pix/ko/" hreflang="ko" class="md-select__link">
+              한국어
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="검색" placeholder="검색" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="검색">
+        
+        <button type="reset" class="md-search__icon md-icon" title="지우기" aria-label="지우기" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            검색 초기화
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/jhhuh/pix" title="저장소로 이동" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="네비게이션" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="pix" class="md-nav__button md-logo" aria-label="pix" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    pix
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/jhhuh/pix" title="저장소로 이동" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    홈
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CLI 레퍼런스
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../api/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    API 레퍼런스
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            API 레퍼런스
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/base32/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pix.base32
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/hash/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pix.hash
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/nar/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pix.nar
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/store_path/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pix.store_path
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/derivation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pix.derivation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/daemon/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pix.daemon
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/pixpkgs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pixpkgs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    내부 구조
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            내부 구조
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../store-paths/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    스토어 경로
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nar-format/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    NAR 형식
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../daemon-protocol/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    데몬 프로토콜
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../derivations/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    파생(Derivation)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../base32/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Base32 인코딩
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    오버레이와 부트스트랩
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    오버레이와 부트스트랩
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="목차">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      목차
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#nix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Nix 오버레이 모델
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Nix 오버레이 모델">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      왜 두 개의 인자가 필요한가?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#python" class="md-nav__link">
+    <span class="md-ellipsis">
+      네 가지 Python 구현
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="네 가지 Python 구현">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a" class="md-nav__link">
+    <span class="md-ellipsis">
+      A: 클래스 상속
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b-__getattr__" class="md-nav__link">
+    <span class="md-ellipsis">
+      B: __getattr__ 체인
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c" class="md-nav__link">
+    <span class="md-ellipsis">
+      C: 지연 고정점
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d" class="md-nav__link">
+    <span class="md-ellipsis">
+      D: 클래스 데코레이터
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#infinite-recursion-trap" class="md-nav__link">
+    <span class="md-ellipsis">
+      무한 재귀 함정
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="무한 재귀 함정">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      순환
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#super" class="md-nav__link">
+    <span class="md-ellipsis">
+      super()가 도움이 되지 않는 이유
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cached_property" class="md-nav__link">
+    <span class="md-ellipsis">
+      @cached_property가 도움이 되지 않는 이유
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      근본 원인
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      비교
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="비교">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      언제 무엇을 사용할 것인가
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nixpkgs-stdenv" class="md-nav__link">
+    <span class="md-ellipsis">
+      부록: nixpkgs stdenv 부트스트랩
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="부록: nixpkgs stdenv 부트스트랩">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      씨앗
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      단계
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      세 번의 전환
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      실제 오버레이 패턴
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hello" class="md-nav__link">
+    <span class="md-ellipsis">
+      hello 패키지
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="_1">오버레이와 부트스트랩 고정점<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<p>Nix의 오버레이 시스템은 nixpkgs가 100,000개 이상의 패키지를 단일 속성 집합으로 합성하는 방법이자, stdenv 부트스트랩이 도구 체인을 처음부터 재구축하는 방법입니다. 핵심 메커니즘은 <strong>고정점 평가(fixed-point evaluation)</strong>: 오버레이는 아직 존재하지 않는 최종 결과를 참조하며, 지연 평가(laziness)가 이를 가능하게 합니다.</p>
+<p>이 페이지에서는 네 가지 Python 구현을 통해 이론을 탐구합니다. 각 구현은 패턴이 어떻게 동작하는지, 그리고 어떻게 깨질 수 있는지를 다르게 보여줍니다.</p>
+<h2 id="nix">Nix 오버레이 모델<a class="headerlink" href="#nix" title="Permanent link">&para;</a></h2>
+<p>오버레이는 두 개의 인자를 받는 함수입니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="ss">overlay</span> <span class="o">=</span> final<span class="p">:</span> prev<span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  <span class="ss">tools</span> <span class="o">=</span> mkTools <span class="p">{</span> <span class="ss">shell</span> <span class="o">=</span> prev<span class="o">.</span>shell<span class="p">;</span> <span class="p">};</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">};</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>인자</th>
+<th>의미</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>final</code></td>
+<td>완성된 결과 (모든 오버레이 적용 후)</td>
+<td>지연 바인딩: <code>final.gcc</code>는 가장 파생된 버전을 얻음</td>
+</tr>
+<tr>
+<td><code>prev</code></td>
+<td>이전 레이어 (이 오버레이 적용 전)</td>
+<td>빌드 의존성: <code>prev.shell</code>은 이 오버라이드 이전의 버전을 얻음</td>
+</tr>
+</tbody>
+</table>
+<p>오버레이는 <code>lib.composeExtensions</code>를 통해 단일 함수로 합성되고, <code>lib.fix</code>를 통해 평가됩니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="ss">fix</span> <span class="o">=</span> f<span class="p">:</span> <span class="k">let</span> <span class="ss">x</span> <span class="o">=</span> f x<span class="p">;</span> <span class="k">in</span> x<span class="p">;</span>
+</code></pre></div>
+<p>결과 <code>x</code>가 <code>f</code>에 자기 자신의 인자로 전달됩니다 — 순환 정의이지만 Nix가 지연 평가이기 때문에 동작합니다. 속성 접근이 필요할 때 평가를 트리거합니다.</p>
+<h3 id="_2">왜 두 개의 인자가 필요한가?<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<p>인자 하나로는 충분하지 않습니다. 3단계 부트스트랩을 생각해 보세요:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Stage 0:  shell-v0, tools-v0, app (shell + tools 사용)
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Stage 1:  tools-v1 (stage0의 shell로 재빌드)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Stage 2:  shell-v1 (stage1의 tools로 재빌드)
+</code></pre></div>
+<p>Stage 2는 <code>shell</code>을 오버라이드하고 <code>prev.tools</code> (= stage 1의 tools)로 빌드합니다. 그런데 stage 1의 <code>tools</code> 오버라이드는 <code>prev.shell</code> (= stage 0의 shell)로 빌드되었습니다. 만약 stage 1이 <code>prev.shell</code> 대신 <code>final.shell</code>을 사용했다면, stage 2의 오버라이드를 보게 되는데 — 이것은 stage 1의 tools에 의존합니다 — 순환이 생깁니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>                    ┌──────────── 순환! ────────────┐
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>                    │                                │
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>                    v                                │
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>final.shell ──&gt; stage2.shell(final.tools)           │
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>                    │                                │
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>                    v                                │
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>            final.tools ──&gt; stage1.tools(final.shell)┘
+</code></pre></div>
+<p><code>prev</code> 인자가 순환을 끊습니다: 각 오버라이드는 최종 값이 아닌 <em>이전</em> 단계의 값으로 빌드합니다. <code>final</code> 인자는 열린 재귀(open recursion)를 제공합니다: <code>app</code>과 같이 오버라이드되지 않은 패키지는 <code>final.shell</code>과 <code>final.tools</code>를 참조하여 최신 오버라이드를 자동으로 가져옵니다.</p>
+<hr />
+<h2 id="python">네 가지 Python 구현<a class="headerlink" href="#python" title="Permanent link">&para;</a></h2>
+<p>동일한 3단계 부트스트랩을 네 가지 방법으로 구현했습니다. 네 가지 모두 동일한 테스트를 통과합니다 — 같은 지연 바인딩 동작, 같은 오버라이드 의미론. 하지만 각각 다른 실패 모드를 가집니다.</p>
+<p>소스: <a href="https://github.com/jhhuh/pix/tree/master/experiments"><code>experiments/</code></a> — 각 하위 폴더는 부트스트랩과 테스트 파일을 포함한 자체 완결 구조입니다.</p>
+<h3 id="a">A: 클래스 상속<a class="headerlink" href="#a" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span> <span class="nc">Stage0</span><span class="p">(</span><span class="n">PackageSet</span><span class="p">):</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="k">def</span> <span class="nf">shell</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>        <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;shell&quot;</span><span class="p">,</span> <span class="n">builder</span><span class="o">=</span><span class="s2">&quot;/bin/sh&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="k">def</span> <span class="nf">tools</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">shell</span><span class="p">],</span> <span class="o">...</span><span class="p">)</span>  <span class="c1"># self = final</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="k">def</span> <span class="nf">app</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>        <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">shell</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tools</span><span class="p">],</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="k">class</span> <span class="nc">Stage1</span><span class="p">(</span><span class="n">Stage0</span><span class="p">):</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>    <span class="k">def</span> <span class="nf">_prev</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>        <span class="k">return</span> <span class="n">Stage0</span><span class="p">()</span>  <span class="c1"># prev = 별도 인스턴스</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>    <span class="k">def</span> <span class="nf">tools</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>        <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools-v1&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_prev</span><span class="o">.</span><span class="n">shell</span><span class="p">],</span> <span class="o">...</span><span class="p">)</span>
+</code></pre></div>
+<p><strong><code>final</code></strong> = <code>self</code>. Python의 MRO가 <code>self.shell</code>을 가장 파생된 오버라이드로 해석 — Nix의 <code>final.shell</code>과 동일.</p>
+<p><strong><code>prev</code></strong> = <code>self._prev</code>. 부모 클래스의 새 인스턴스를 생성하는 <code>@cached_property</code>.</p>
+<p><strong>교훈:</strong> 첫 시도에서는 <code>self</code>만 사용하고 <code>_prev</code>가 없었습니다 — 아래 <a href="#infinite-recursion-trap">무한 재귀 함정</a>을 참조하세요.</p>
+<h3 id="b-__getattr__">B: <code>__getattr__</code> 체인<a class="headerlink" href="#b-__getattr__" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">base</span> <span class="o">=</span> <span class="n">AttrSet</span><span class="p">({</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="s2">&quot;shell&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">final</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;shell&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">),</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="s2">&quot;tools&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">final</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="n">final</span><span class="o">.</span><span class="n">shell</span><span class="p">],</span> <span class="o">...</span><span class="p">),</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="s2">&quot;app&quot;</span><span class="p">:</span>   <span class="k">lambda</span> <span class="n">final</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="n">final</span><span class="o">.</span><span class="n">shell</span><span class="p">,</span> <span class="n">final</span><span class="o">.</span><span class="n">tools</span><span class="p">],</span> <span class="o">...</span><span class="p">),</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="p">})</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">stage1</span> <span class="o">=</span> <span class="n">Overlay</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">final</span><span class="p">,</span> <span class="n">prev</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="s2">&quot;tools&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">final</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools-v1&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="n">prev</span><span class="o">.</span><span class="n">shell</span><span class="p">],</span> <span class="o">...</span><span class="p">),</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="p">})</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="n">stage1</span><span class="o">.</span><span class="n">_set_final</span><span class="p">(</span><span class="n">stage1</span><span class="p">)</span>
+</code></pre></div>
+<p><strong><code>final</code></strong> = 체인을 통해 전파되는 <code>_final</code> 참조. 체인의 모든 노드가 가장 바깥쪽 <code>Overlay</code>를 가리킵니다.</p>
+<p><strong><code>prev</code></strong> = <code>_prev</code> 링크. <code>__getattr__</code>이 현재 레이어에서 오버라이드되지 않은 속성을 <code>_prev</code>로 위임합니다.</p>
+<p><strong>교훈:</strong> <code>_final</code> 참조는 가변 공유 상태입니다. 같은 <code>AttrSet</code>을 두 개의 다른 체인에 합성하면, 두 번째 <code>_set_final()</code>이 첫 번째를 오염시킵니다.</p>
+<h3 id="c">C: 지연 고정점<a class="headerlink" href="#c" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">def</span> <span class="nf">base_overlay</span><span class="p">(</span><span class="n">final</span><span class="p">,</span> <span class="n">prev</span><span class="p">):</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="k">return</span> <span class="p">{</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>        <span class="s2">&quot;shell&quot;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;shell&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">),</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>        <span class="s2">&quot;tools&quot;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="n">final</span><span class="o">.</span><span class="n">shell</span><span class="p">],</span> <span class="o">...</span><span class="p">),</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>        <span class="s2">&quot;app&quot;</span><span class="p">:</span>   <span class="k">lambda</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="n">final</span><span class="o">.</span><span class="n">shell</span><span class="p">,</span> <span class="n">final</span><span class="o">.</span><span class="n">tools</span><span class="p">],</span> <span class="o">...</span><span class="p">),</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="p">}</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="k">def</span> <span class="nf">stage1_overlay</span><span class="p">(</span><span class="n">final</span><span class="p">,</span> <span class="n">prev</span><span class="p">):</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;tools&quot;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools-v1&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="n">prev</span><span class="p">[</span><span class="s2">&quot;shell&quot;</span><span class="p">]()],</span> <span class="o">...</span><span class="p">)}</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="n">result</span> <span class="o">=</span> <span class="n">fix</span><span class="p">(</span><span class="n">compose_overlays</span><span class="p">([</span><span class="n">base_overlay</span><span class="p">,</span> <span class="n">stage1_overlay</span><span class="p">]))</span>
+</code></pre></div>
+<p><strong><code>final</code></strong> = <code>fix()</code>가 오버레이 함수에 전달하는 <code>LazyAttrSet</code>. 속성 접근이 썽크 평가를 트리거합니다.</p>
+<p><strong><code>prev</code></strong> = 이전 레이어들의 썽크 딕셔너리. 접근: <code>prev["name"]()</code>.</p>
+<p><strong>교훈:</strong> 같은 개념에 두 가지 API: <code>final.shell</code> (속성 접근) vs <code>prev["shell"]()</code> (딕셔너리 조회 + 호출). 문자열 키의 오타는 임포트 시가 아닌 런타임에 실패합니다.</p>
+<h3 id="d">D: 클래스 데코레이터<a class="headerlink" href="#d" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">class</span> <span class="nc">Stage0</span><span class="p">(</span><span class="n">PackageSet</span><span class="p">):</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="k">def</span> <span class="nf">shell</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;shell&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="k">def</span> <span class="nf">tools</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">shell</span><span class="p">],</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="k">def</span> <span class="nf">app</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>   <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">shell</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tools</span><span class="p">],</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="nd">@overlay</span><span class="p">(</span><span class="n">tools</span><span class="o">=</span><span class="k">lambda</span> <span class="bp">self</span><span class="p">,</span> <span class="n">prev</span><span class="p">:</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools-v1&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="n">prev</span><span class="o">.</span><span class="n">shell</span><span class="p">],</span> <span class="o">...</span><span class="p">))</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="k">class</span> <span class="nc">Stage1</span><span class="p">(</span><span class="n">Stage0</span><span class="p">):</span> <span class="k">pass</span>
+</code></pre></div>
+<p><strong><code>final</code></strong> = <code>self</code> — 실험 A와 같은 MRO 기반 지연 바인딩.</p>
+<p><strong><code>prev</code></strong> = <code>self._prev</code> — <code>@overlay</code> 데코레이터가 자동으로 주입.</p>
+<p><strong>교훈:</strong> 데코레이터가 모든 배관(<code>_prev</code> 생성, <code>@cached_property</code> 래핑)을 숨기지만, <code>type(cls.__name__, (cls,), attrs)</code>로 동적 클래스를 생성합니다. 데코레이트된 <code>Stage1</code>은 작성한 클래스가 아닙니다 — 생성된 서브클래스입니다.</p>
+<hr />
+<h2 id="infinite-recursion-trap">무한 재귀 함정<a class="headerlink" href="#infinite-recursion-trap" title="Permanent link">&para;</a></h2>
+<p>가장 교훈적인 실패는 실험 A에서 발생했습니다. 첫 시도에서는 모든 곳에서 <code>self</code>를 사용했습니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">class</span> <span class="nc">Stage1</span><span class="p">(</span><span class="n">Stage0</span><span class="p">):</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="k">def</span> <span class="nf">tools</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>        <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tools-v1&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">shell</span><span class="p">],</span> <span class="o">...</span><span class="p">)</span>  <span class="c1"># ← self.shell</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="k">class</span> <span class="nc">Stage2</span><span class="p">(</span><span class="n">Stage1</span><span class="p">):</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="k">def</span> <span class="nf">shell</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>        <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;shell-v1&quot;</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tools</span><span class="p">],</span> <span class="o">...</span><span class="p">)</span>  <span class="c1"># ← self.tools</span>
+</code></pre></div>
+<p>자연스러워 보이지만 <code>RecursionError</code>를 발생시킵니다.</p>
+<h3 id="_3">순환<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p><code>Stage2().app</code>에 접근하면:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Stage2().app
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>  → self.shell                  (MRO → Stage2.shell)
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    → self.tools                (MRO → Stage1.tools)
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>      → self.shell              (MRO → Stage2.shell)
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>        → self.tools            (MRO → Stage1.tools)
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>          → ...                 RecursionError!
+</code></pre></div>
+<p>Stage2.shell은 <code>self.tools</code>가 필요합니다. Stage1.tools는 <code>self.shell</code>이 필요합니다. 둘 다 MRO를 통해 가장 파생된 오버라이드로 해석됩니다. 이 순환은 근본적인 것입니다 — 코드의 버그가 아니라 <code>final</code>과 <code>prev</code>를 단일 참조로 혼합한 결과입니다.</p>
+<h3 id="super"><code>super()</code>가 도움이 되지 않는 이유<a class="headerlink" href="#super" title="Permanent link">&para;</a></h3>
+<p>Python의 <code>super()</code>는 메서드를 조회하는 클래스를 변경하지만, <code>self</code>는 가장 파생된 인스턴스로 남습니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">class</span> <span class="nc">Stage2</span><span class="p">(</span><span class="n">Stage1</span><span class="p">):</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="k">def</span> <span class="nf">shell</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>        <span class="c1"># super().tools → Stage1.tools.__get__(self, Stage2)</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>        <span class="c1"># 하지만 Stage1.tools는 self.shell을 사용 → Stage2.shell → 순환!</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>        <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">tools</span><span class="p">])</span>
+</code></pre></div>
+<h3 id="cached_property"><code>@cached_property</code>가 도움이 되지 않는 이유<a class="headerlink" href="#cached_property" title="Permanent link">&para;</a></h3>
+<p><code>@cached_property</code>는 첫 접근 시 결과를 <code>instance.__dict__</code>에 저장합니다. 하지만 재귀는 첫 계산 <em>중에</em> 발생합니다 — 값이 캐시되기 전에:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>self.shell  [계산 시작 — 아직 캐시 안 됨]
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  → self.tools  [계산 시작 — 아직 캐시 안 됨]
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    → self.shell  [아직 계산 중 — 반환할 캐시된 값 없음]
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>      → RecursionError
+</code></pre></div>
+<p>캐시는 <em>이미 계산된</em> 값에 대해서만 순환을 끊을 수 있습니다. 초기 계산 중에는 순환을 끊을 수 없습니다.</p>
+<h3 id="_4">근본 원인<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<p>Nix 오버레이는 두 개의 인자가 있습니다. Python의 <code>self</code>는 하나입니다. 해결책: <code>self._prev</code>를 두 번째로 추가합니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">class</span> <span class="nc">Stage2</span><span class="p">(</span><span class="n">Stage1</span><span class="p">):</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>    <span class="k">def</span> <span class="nf">_prev</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>        <span class="k">return</span> <span class="n">Stage1</span><span class="p">()</span>  <span class="c1"># ← 이전 단계의 별도 인스턴스</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    <span class="nd">@cached_property</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>    <span class="k">def</span> <span class="nf">shell</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>        <span class="k">return</span> <span class="n">drv</span><span class="p">(</span><span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_prev</span><span class="o">.</span><span class="n">tools</span><span class="p">])</span>  <span class="c1"># ← final이 아닌 prev</span>
+</code></pre></div>
+<p>이제 <code>self._prev.tools</code>는 <code>Stage1()</code> 인스턴스를 생성하고, 그 인스턴스 자체에서 <code>tools</code>를 해석합니다 (Stage2 인스턴스가 아닌), 순환을 끊습니다.</p>
+<div class="admonition note">
+<p class="admonition-title">경험 법칙</p>
+<p><strong>오버라이드된 메서드</strong>는 빌드 의존성에 <code>self._prev.X</code>를 사용합니다 (이전 단계의 값).
+<strong>상속된 메서드</strong>는 <code>self.X</code>를 사용합니다 — 지연 바인딩이 열린 재귀를 무료로 제공합니다.</p>
+<p>Nix에서도 같은 규칙이 적용됩니다: 오버레이는 재빌드할 입력에 <code>prev.X</code>를, 최종 버전을 원하는 속성에 <code>final.X</code>를 사용합니다.</p>
+</div>
+<hr />
+<h2 id="_5">비교<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align: center;">A: 상속</th>
+<th style="text-align: center;">B: <code>__getattr__</code></th>
+<th style="text-align: center;">C: 지연 고정점</th>
+<th style="text-align: center;">D: 데코레이터</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>줄 수 (인프라 + 부트스트랩)</td>
+<td style="text-align: center;">153</td>
+<td style="text-align: center;">198</td>
+<td style="text-align: center;">169</td>
+<td style="text-align: center;">130</td>
+</tr>
+<tr>
+<td><code>final</code> 메커니즘</td>
+<td style="text-align: center;"><code>self</code> (MRO)</td>
+<td style="text-align: center;"><code>_final</code> 참조</td>
+<td style="text-align: center;"><code>LazyAttrSet</code> 프록시</td>
+<td style="text-align: center;"><code>self</code> (MRO)</td>
+</tr>
+<tr>
+<td><code>prev</code> 메커니즘</td>
+<td style="text-align: center;"><code>self._prev</code> (수동)</td>
+<td style="text-align: center;"><code>_prev</code> 체인</td>
+<td style="text-align: center;"><code>prev</code> 딕셔너리</td>
+<td style="text-align: center;"><code>self._prev</code> (자동)</td>
+</tr>
+<tr>
+<td>IDE 자동완성</td>
+<td style="text-align: center;">가능</td>
+<td style="text-align: center;">불가</td>
+<td style="text-align: center;">불가</td>
+<td style="text-align: center;">부분적</td>
+</tr>
+<tr>
+<td>타입 검사</td>
+<td style="text-align: center;">가능</td>
+<td style="text-align: center;">불가</td>
+<td style="text-align: center;">불가</td>
+<td style="text-align: center;">부분적</td>
+</tr>
+<tr>
+<td>동적 합성</td>
+<td style="text-align: center;">불가</td>
+<td style="text-align: center;">가능</td>
+<td style="text-align: center;">가능</td>
+<td style="text-align: center;">불가</td>
+</tr>
+<tr>
+<td>재귀 감지</td>
+<td style="text-align: center;">없음 (행)</td>
+<td style="text-align: center;">없음 (행)</td>
+<td style="text-align: center;">있음 (진단 메시지)</td>
+<td style="text-align: center;">없음 (행)</td>
+</tr>
+<tr>
+<td>Nix 충실도</td>
+<td style="text-align: center;">낮음</td>
+<td style="text-align: center;">중간</td>
+<td style="text-align: center;">높음</td>
+<td style="text-align: center;">중간</td>
+</tr>
+<tr>
+<td>오버레이당 보일러플레이트</td>
+<td style="text-align: center;">~10줄</td>
+<td style="text-align: center;">~5줄</td>
+<td style="text-align: center;">~5줄</td>
+<td style="text-align: center;">~3줄</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_6">언제 무엇을 사용할 것인가<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>A</strong> — 체인이 작고 정적이며, 완전한 IDE 지원을 원할 때.</li>
+<li><strong>B</strong> — 오버레이를 동적으로 합성해야 할 때 (플러그인 시스템).</li>
+<li><strong>C</strong> — Nix 의미론을 충실하게 모델링하는 것이 중요할 때 (교육용, Nix 코드 1:1 포팅).</li>
+<li><strong>D</strong> — Python 프로젝트에 가장 균형 잡힌 선택: 최소 보일러플레이트, IDE 친화적 기본 클래스, 선언적 오버레이 구문.</li>
+</ul>
+<hr />
+<h2 id="nixpkgs-stdenv">부록: nixpkgs stdenv 부트스트랩<a class="headerlink" href="#nixpkgs-stdenv" title="Permanent link">&para;</a></h2>
+<p>실제 nixpkgs stdenv 부트스트랩은 7단계의 체인이며, 각 단계는 특수화된 오버레이입니다. 닭과 달걀 문제를 해결합니다: GCC를 빌드하려면 glibc가 필요하지만, glibc를 빌드하려면 GCC가 필요합니다.</p>
+<h3 id="_7">씨앗<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<p>모든 것은 단일 사전 빌드 타볼에서 시작합니다: <code>bootstrap-tools</code>. GCC, coreutils, binutils, bash 등 125개의 바이너리와 glibc 및 지원 라이브러리를 포함합니다. 이것이 유일한 외부 바이너리 의존성입니다 — 다른 모든 패키지는 소스에서 재빌드됩니다.</p>
+<h3 id="_8">단계<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>단계</th>
+<th>오버라이드 대상</th>
+<th>주요 빌드</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0</strong></td>
+<td>없음 (씨앗)</td>
+<td>bootstrap-tools를 컴파일러로 사용하는 더미 stdenv</td>
+</tr>
+<tr>
+<td><strong>1</strong></td>
+<td>gcc-wrapper, fetchurl</td>
+<td>소스에서 Binutils, perl</td>
+</tr>
+<tr>
+<td><strong>xgcc</strong></td>
+<td>gcc (첫 재빌드)</td>
+<td>소스에서 GCC (하지만 부트스트랩 glibc에 링크됨)</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td><strong>glibc</strong></td>
+<td>xgcc로 컴파일된 실제 glibc-2.40 (<strong>libc 전환</strong>)</td>
+</tr>
+<tr>
+<td><strong>3</strong></td>
+<td><strong>gcc</strong> (최종)</td>
+<td>실제 glibc로 컴파일된 최종 GCC (<strong>컴파일러 전환</strong>)</td>
+</tr>
+<tr>
+<td><strong>4</strong></td>
+<td>coreutils, bash, sed, grep, ...</td>
+<td>소스에서 모든 표준 도구 (<strong>도구 전환</strong>)</td>
+</tr>
+<tr>
+<td><strong>최종</strong></td>
+<td>모든 것 조립</td>
+<td>프로덕션 stdenv — bootstrap-tools에 대한 참조 없음</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_9">세 번의 전환<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<p>부트스트랩은 점진적 교체를 통해 순환 의존성을 해결합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>bootstrap-tools (사전 빌드)
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>        │
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>   ┌────┴────┐
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>   │ Stage 1 │  소스에서 binutils
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>   └────┬────┘
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>   ┌────┴────┐
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>   │  xgcc   │  소스에서 GCC (하지만 부트스트랩 glibc에 링크)
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>   └────┬────┘
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>   ┌────┴─────────────────────────┐
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>   │ Stage 2: LIBC 전환           │  xgcc가 실제 glibc 컴파일
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>   └────┬─────────────────────────┘
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>   ┌────┴─────────────────────────┐
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>   │ Stage 3: 컴파일러 전환        │  실제 glibc가 최종 GCC 컴파일
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>   └────┬─────────────────────────┘
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>   ┌────┴─────────────────────────┐
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>   │ Stage 4: 도구 전환            │  최종 GCC가 coreutils, bash, ... 재빌드
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>   └────┬─────────────────────────┘
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>   ┌────┴────┐
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>   │  최종   │  모든 구성요소 소스에서, 부트스트랩 참조 없음
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>   └─────────┘
+</code></pre></div>
+<p><strong>Stage xgcc</strong>가 가장 미묘합니다. xgcc 바이너리 자체는 bootstrap-tools의 쓰레기에 링크되어 있지만 — 그것은 중요하지 않습니다. 중요한 것은 <em>xgcc가 내보내는 코드</em>입니다. 그 코드는 stage 2에서 빌드된 실제 glibc에 대해 실행됩니다.</p>
+<h3 id="_10">실제 오버레이 패턴<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
+<p>각 단계는 오버레이입니다: 일부 패키지를 오버라이드하고 나머지는 이전 단계에서 상속합니다. Stage 2는 glibc를 오버라이드하지만 xgcc 단계에서 xgcc를 상속합니다. Stage 3은 gcc를 오버라이드하지만 stage 2에서 glibc를 상속합니다.</p>
+<p>이것이 정확히 우리의 실험이 보여주는 패턴입니다:</p>
+<ul>
+<li><code>prev.tools</code> → "이전 단계의 컴파일러로 glibc를 빌드"</li>
+<li><code>final.gcc</code> → "hello가 gcc를 사용할 때 가장 파생된 버전을 얻음"</li>
+</ul>
+<p>최종 stdenv는 <code>disallowedRequisites</code>로 완전성을 강제합니다: 최종 출력에서 bootstrap-tools에 대한 참조가 있으면 빌드 실패입니다. 이는 부트스트랩이 완전함을 보장합니다 — 모든 구성요소가 소스에서 재빌드되었습니다.</p>
+<h3 id="hello">hello 패키지<a class="headerlink" href="#hello" title="Permanent link">&para;</a></h3>
+<p>표준 테스트: 부트스트랩이 작동하는 <code>hello</code>를 생산할 수 있는가?</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>hello-2.12.2.drv
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>  builder: bash-5.3p3     (stage 4에서 재빌드)
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>  stdenv:  stdenv-linux    (최종 stdenv)
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>  source:  hello-2.12.2.tar.gz (fetchurl로 가져옴)
+</code></pre></div>
+<p>최종 stdenv의 38개 입력 derivation은 모두 오버레이 체인을 통해 단일 bootstrap-tools 타볼로 추적됩니다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.sections", "navigation.expand", "navigation.indexes", "toc.integrate"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "\ud074\ub9bd\ubcf4\ub4dc\uc5d0 \ubcf5\uc0ac\ub428", "clipboard.copy": "\ud074\ub9bd\ubcf4\ub4dc\ub85c \ubcf5\uc0ac", "search.result.more.one": "\uc774 \ubb38\uc11c\uc5d0\uc11c 1\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.more.other": "\uc774 \ubb38\uc11c\uc5d0\uc11c #\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.none": "\uac80\uc0c9\uc5b4\uc640 \uc77c\uce58\ud558\ub294 \ubb38\uc11c\uac00 \uc5c6\uc2b5\ub2c8\ub2e4", "search.result.one": "1\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.other": "#\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.placeholder": "\uac80\uc0c9\uc5b4\ub97c \uc785\ub825\ud558\uc138\uc694", "search.result.term.missing": "\ud3ec\ud568\ub418\uc9c0 \uc54a\uc740 \uac80\uc0c9\uc5b4", "select.version": "\ubc84\uc804 \uc120\ud0dd"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.525ec568.min.js"></script>
+      
+    
+  </body>
+</html>
