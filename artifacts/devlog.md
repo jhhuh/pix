@@ -126,3 +126,38 @@ Append-only log of what was attempted, what failed, what worked, and why.
 - Updated all docs (EN+KO) to cover pixpkgs and maskOutputs explanation.
 - Verified deployed docs via WebFetch (7 pages checked, all correct).
 - Commit — "Update docs to cover pixpkgs and maskOutputs two-mode explanation".
+
+## 2026-02-26 — Overlay pattern experiments
+
+- Designed and implemented 4 experiments exploring Python patterns for Nix overlay semantics:
+  - **A: Class Inheritance** — `self` = final, `self._prev` = prev
+  - **B: `__getattr__` Chain** — dynamic overlay objects with `_final` propagation
+  - **C: Lazy Fix** — direct Nix `lib.fix` / `lib.composeExtensions` translation
+  - **D: Class Decorator** — `@overlay(tools=lambda self, prev: ...)` creates dynamic subclasses
+
+### Critical bug: infinite recursion in Experiment A
+
+- **First attempt used only `self`** for both final and prev references.
+- Stage2.shell accessed `self.tools` → resolved to Stage1.tools (via MRO)
+- Stage1.tools accessed `self.shell` → resolved to Stage2.shell (via MRO)
+- **Cycle: Stage2.shell → self.tools → Stage1.tools → self.shell → Stage2.shell → ...**
+- `@cached_property` doesn't help because the cache stores values only AFTER computation completes — during the first computation, there's nothing cached to break the cycle.
+- `super()` doesn't help either — it changes method lookup class but `self` remains the most-derived instance.
+- **Root cause**: Nix overlays have TWO arguments (`final` and `prev`), Python's `self` is only ONE. Without separating them, overrides that build with "previous stage's tools" inevitably chase the late-bound reference back to the current stage's override.
+- **Fix**: Added `self._prev = PreviousStageClass()` as a `@cached_property`. Overridden methods use `self._prev.X` for build inputs (breaking cycles), inherited methods keep using `self.X` (preserving late binding).
+- See `artifacts/skills/python-class-inheritance-infinite-recursion-in-overlay-pattern.md` for detailed trace.
+
+### All 36 tests pass (9 per experiment × 4)
+
+### Research: actual nixpkgs bootstrap chain
+
+- Inspected the real bootstrap chain on the local system (`pkgs/stdenv/linux/default.nix`).
+- **7 stages** (seed → stage0 → stage1 → xgcc → stage2 → stage3 → stage4 → final stdenv).
+- Three key transitions:
+  1. **Libc transition** (stage 2): xgcc compiles real glibc-2.40-218
+  2. **Compiler transition** (stage 3): real glibc + binutils compile final gcc-14.3.0
+  3. **Tools transition** (stage 4): final gcc rebuilds coreutils/sed/grep/bash/etc.
+- Bootstrap-tools = single prebuilt tarball with 125 binaries (the only external input).
+- Final stdenv: 38 inputDrvs, 14 initialPath packages, bash-5.3p3 as shell.
+- hello-2.12.2 depends on: stdenv-linux, bash-5.3p3, hello-2.12.2.tar.gz, version-check-hook.
+- See `artifacts/skills/nixpkgs-stdenv-bootstrap-chain-7-stages.md` for full detail.
