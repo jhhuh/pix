@@ -1,68 +1,68 @@
-"""Tests for decorator overlay pattern.
+"""Tests for decorator bootstrap with full 7-stage chain.
 
-Same test scenarios as Experiments A, B, C for direct comparison.
+Verifies that the @stage_overlay decorator correctly composes all 196
+derivations from nixpkgs bootstrap seed through to hello, hash-perfect.
 """
 
-from experiments.d_decorator.bootstrap import Stage0, Stage1, Stage2
+from experiments.d_decorator.bootstrap import (
+    Stage0, Stage1, StageXgcc, Stage2, Stage3, Stage4, Final, Pkgs,
+)
+from experiments.bootstrap_chain import get_chain, HELLO_DRV, HELLO_OUT
 
 
-def test_stage0_self_consistent():
-    s = Stage0()
-    assert s.shell.name == "shell"
-    assert s.tools.name == "tools"
-    assert s.app.name == "app"
-    assert s.shell.drv_path in s.app.drv.input_drvs
-    assert s.tools.drv_path in s.app.drv.input_drvs
+class TestStageProgression:
+    def test_stage0_has_4_packages(self):
+        assert len(Stage0().all_packages) == 4
+
+    def test_stage1_has_12_packages(self):
+        assert len(Stage1().all_packages) == 12
+
+    def test_stage_xgcc_has_18_packages(self):
+        assert len(StageXgcc().all_packages) == 18
+
+    def test_stage2_has_62_packages(self):
+        assert len(Stage2().all_packages) == 62
+
+    def test_stage3_has_85_packages(self):
+        assert len(Stage3().all_packages) == 85
+
+    def test_stage4_has_104_packages(self):
+        assert len(Stage4().all_packages) == 104
+
+    def test_final_has_167_packages(self):
+        assert len(Final().all_packages) == 167
+
+    def test_pkgs_has_196_packages(self):
+        assert len(Pkgs().all_packages) == 196
 
 
-def test_stage1_overrides_tools():
-    s = Stage1()
-    assert s.shell.name == "shell"       # inherited
-    assert s.tools.name == "tools-v1"    # overridden by decorator
+class TestHashPerfect:
+    def test_all_196_hashes_match(self):
+        p = Pkgs()
+        chain = get_chain()
+        for drv_path, pkg in p.all_packages.items():
+            assert pkg.drv_path == drv_path
+
+    def test_hello_drv_path(self):
+        assert Pkgs().hello.drv_path == HELLO_DRV
+
+    def test_hello_out_path(self):
+        assert Pkgs().hello.out == HELLO_OUT
 
 
-def test_stage1_app_uses_new_tools():
-    s0 = Stage0()
-    s1 = Stage1()
-    assert s1.tools.drv_path in s1.app.drv.input_drvs
-    assert s1.app.out != s0.app.out
+class TestOverlayBehavior:
+    def test_later_stages_include_earlier(self):
+        s0 = Stage0().all_packages
+        s1 = Stage1().all_packages
+        for dp in s0:
+            assert dp in s1
 
+    def test_decorator_adds_packages(self):
+        s0 = Stage0().all_packages
+        s1 = Stage1().all_packages
+        assert len(s1) - len(s0) == 8
 
-def test_stage1_shell_unchanged():
-    s0 = Stage0()
-    s1 = Stage1()
-    assert s1.shell.out == s0.shell.out
-
-
-def test_stage2_overrides_shell():
-    s = Stage2()
-    assert s.shell.name == "shell-v1"    # overridden by decorator
-    assert s.tools.name == "tools-v1"    # inherited from Stage1
-
-
-def test_stage2_app_uses_new_shell():
-    s1 = Stage1()
-    s2 = Stage2()
-    assert s2.shell.drv_path in s2.app.drv.input_drvs
-    assert s2.tools.drv_path in s2.app.drv.input_drvs
-    assert s2.app.out != s1.app.out
-
-
-def test_all_stages_different_app():
-    s0, s1, s2 = Stage0(), Stage1(), Stage2()
-    assert s0.app.out != s1.app.out
-    assert s1.app.out != s2.app.out
-    assert s0.app.out != s2.app.out
-
-
-def test_stage2_tools_same_as_stage1():
-    s1 = Stage1()
-    s2 = Stage2()
-    assert s2.tools.out == s1.tools.out
-
-
-def test_caching():
-    s = Stage2()
-    first = s.app
-    second = s.app
-    assert first is second
+    def test_caching(self):
+        p = Pkgs()
+        assert p.all_packages is p.all_packages
+        assert p.hello is p.hello

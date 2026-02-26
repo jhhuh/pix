@@ -55,37 +55,56 @@ final.shell ──> stage2.shell(final.tools)           │
 
 ## 네 가지 Python 구현
 
-동일한 3단계 부트스트랩을 네 가지 방법으로 구현했습니다. 네 가지 모두 동일한 테스트를 통과합니다 — 같은 지연 바인딩 동작, 같은 오버라이드 의미론. 하지만 각각 다른 실패 모드를 가집니다.
+네 가지 패턴 모두 **완전한 7단계 nixpkgs 부트스트랩**을 구현합니다 — 부트스트랩 씨앗부터 `hello-2.12.2`까지 196개 derivation, 모두 실제 nixpkgs와 **해시 완전 일치**.
 
 소스: [`experiments/`](https://github.com/jhhuh/pix/tree/master/experiments) — 각 하위 폴더는 부트스트랩과 테스트 파일을 포함한 자체 완결 구조입니다.
+
+### 해시 완전 검증
+
+실험은 Nix 스토어의 실제 `.drv` 파일에서 196개 derivation을 모두 재구성합니다:
+
+| 단계 | 신규 패키지 | 누적 | 주요 빌드 |
+|------|:---:|:---:|---|
+| stage0 | 4 | 4 | busybox, tarball, bootstrap-tools, stage0-stdenv |
+| stage1 | 8 | 12 | binutils-wrapper, gcc-wrapper, gnu-config |
+| stage-xgcc | 6 | 18 | xgcc-14.3.0, gmp, mpfr, isl, libmpc |
+| stage2 | 44 | 62 | glibc-2.40, binutils, bison, perl (libc 전환) |
+| stage3 | 23 | 85 | gcc-14.3.0, linux-headers (컴파일러 전환) |
+| stage4 | 19 | 104 | coreutils, bash 재빌드 (도구 전환) |
+| final | 63 | 167 | stdenv-linux, gcc-wrapper, coreutils, findutils... |
+| hello | 29 | **196** | **hello-2.12.2**, curl, openssl, perl |
+
+모든 derivation이 실제 nixpkgs와 **바이트 동일**합니다 — 모든 `.drv` 경로와 출력 경로가 정확히 일치합니다. 이것은 nixpkgs를 재현하기 위한 것이 아닙니다; **검증 전략**입니다. Nix derivation 해시는 입력으로부터 순수하게 계산되므로, 출력 경로를 비교하는 것만으로 전체 해시 파이프라인(ATerm 직렬화, `hashDerivationModulo`, `make_output_path`, `make_text_store_path`)을 검증할 수 있습니다 — 아무것도 빌드하지 않고.
 
 ### A: 클래스 상속
 
 ```python
 class Stage0(PackageSet):
     @cached_property
-    def shell(self):
-        return drv(name="shell", builder="/bin/sh", ...)
+    def _own_packages(self) -> dict[str, Package]:
+        return {dp: packages[dp] for dp in stages[0]}
 
     @cached_property
-    def tools(self):
-        return drv(name="tools", deps=[self.shell], ...)  # self = final
-
-    @cached_property
-    def app(self):
-        return drv(name="app", deps=[self.shell, self.tools], ...)
+    def all_packages(self) -> dict[str, Package]:
+        return dict(self._own_packages)
 
 class Stage1(Stage0):
     @cached_property
-    def _prev(self):
+    def _prev(self) -> Stage0:
         return Stage0()  # prev = 별도 인스턴스
 
     @cached_property
-    def tools(self):
-        return drv(name="tools-v1", deps=[self._prev.shell], ...)
+    def _own_packages(self) -> dict[str, Package]:
+        return {dp: packages[dp] for dp in stages[1]}
+
+    @cached_property
+    def all_packages(self) -> dict[str, Package]:
+        return {**self._prev.all_packages, **self._own_packages}
+
+# 8개 클래스: Stage0 → Stage1 → StageXgcc → Stage2 → Stage3 → Stage4 → Final → Pkgs
 ```
 
-**`final`** = `self`. Python의 MRO가 `self.shell`을 가장 파생된 오버라이드로 해석 — Nix의 `final.shell`과 동일.
+**`final`** = `self`. Python의 MRO가 가장 파생된 오버라이드로 해석 — Nix의 `final`과 동일.
 
 **`prev`** = `self._prev`. 부모 클래스의 새 인스턴스를 생성하는 `@cached_property`.
 
@@ -94,64 +113,61 @@ class Stage1(Stage0):
 ### B: `__getattr__` 체인
 
 ```python
-base = AttrSet({
-    "shell": lambda final: drv(name="shell", ...),
-    "tools": lambda final: drv(name="tools", deps=[final.shell], ...),
-    "app":   lambda final: drv(name="app", deps=[final.shell, final.tools], ...),
-})
-
-stage1 = Overlay(base, lambda final, prev: {
-    "tools": lambda final: drv(name="tools-v1", deps=[prev.shell], ...),
-})
-stage1._set_final(stage1)
+base = StageSet(stage_idx=0)          # 4개 패키지
+s1   = OverlaySet(base, stage_idx=1)  # 8개 추가
+s2   = OverlaySet(s1, stage_idx=2)    # 6개 추가
+...
+top  = OverlaySet(s6, stage_idx=7)    # hello 추가
 ```
 
-**`final`** = 체인을 통해 전파되는 `_final` 참조. 체인의 모든 노드가 가장 바깥쪽 `Overlay`를 가리킵니다.
+**`final`** = `_set_final()`을 통해 체인 아래로 전파되는 공유 참조.
 
-**`prev`** = `_prev` 링크. `__getattr__`이 현재 레이어에서 오버라이드되지 않은 속성을 `_prev`로 위임합니다.
+**`prev`** = `_prev` 링크. 각 `OverlaySet`이 이전 레이어를 래핑합니다.
 
 **교훈:** `_final` 참조는 가변 공유 상태입니다. 같은 `AttrSet`을 두 개의 다른 체인에 합성하면, 두 번째 `_set_final()`이 첫 번째를 오염시킵니다.
 
 ### C: 지연 고정점
 
 ```python
-def base_overlay(final, prev):
-    return {
-        "shell": lambda: drv(name="shell", ...),
-        "tools": lambda: drv(name="tools", deps=[final.shell], ...),
-        "app":   lambda: drv(name="app", deps=[final.shell, final.tools], ...),
-    }
-
-def stage1_overlay(final, prev):
-    return {"tools": lambda: drv(name="tools-v1", deps=[prev["shell"]()], ...)}
-
-result = fix(compose_overlays([base_overlay, stage1_overlay]))
+result = fix(compose_overlays([
+    base_overlay,          # stage0: 4개 패키지
+    stage1_overlay,        # +8
+    stage_xgcc_overlay,    # +6
+    stage2_overlay,        # +44
+    stage3_overlay,        # +23
+    stage4_overlay,        # +19
+    final_overlay,         # +63
+    hello_overlay,         # +29 = 196개 총합
+]))
 ```
 
 **`final`** = `fix()`가 오버레이 함수에 전달하는 `LazyAttrSet`. 속성 접근이 썽크 평가를 트리거합니다.
 
 **`prev`** = 이전 레이어들의 썽크 딕셔너리. 접근: `prev["name"]()`.
 
-**교훈:** 같은 개념에 두 가지 API: `final.shell` (속성 접근) vs `prev["shell"]()` (딕셔너리 조회 + 호출). 문자열 키의 오타는 임포트 시가 아닌 런타임에 실패합니다.
+**교훈:** 같은 개념에 두 가지 API: `final.attr` (속성 접근) vs `prev["name"]()` (딕셔너리 조회 + 호출). 문자열 키의 오타는 임포트 시가 아닌 런타임에 실패합니다.
 
 ### D: 클래스 데코레이터
 
 ```python
 class Stage0(PackageSet):
     @cached_property
-    def shell(self): return drv(name="shell", ...)
+    def _own_packages(self): ...
     @cached_property
-    def tools(self): return drv(name="tools", deps=[self.shell], ...)
-    @cached_property
-    def app(self):   return drv(name="app", deps=[self.shell, self.tools], ...)
+    def all_packages(self): return dict(self._own_packages)
 
-@overlay(tools=lambda self, prev: drv(name="tools-v1", deps=[prev.shell], ...))
+@stage_overlay(1)
 class Stage1(Stage0): pass
+
+@stage_overlay(2)
+class StageXgcc(Stage1): pass
+
+# ... @stage_overlay(7) class Pkgs(Final): pass 까지
 ```
 
-**`final`** = `self` — 실험 A와 같은 MRO 기반 지연 바인딩.
+**`final`** = `self` — 패턴 A와 같은 MRO 기반 지연 바인딩.
 
-**`prev`** = `self._prev` — `@overlay` 데코레이터가 자동으로 주입.
+**`prev`** = `self._prev` — `@stage_overlay` 데코레이터가 자동으로 주입.
 
 **교훈:** 데코레이터가 모든 배관(`_prev` 생성, `@cached_property` 래핑)을 숨기지만, `type(cls.__name__, (cls,), attrs)`로 동적 클래스를 생성합니다. 데코레이트된 `Stage1`은 작성한 클래스가 아닙니다 — 생성된 서브클래스입니다.
 
@@ -243,24 +259,33 @@ class Stage2(Stage1):
 
 ## 비교
 
-|                           | A: 상속 | B: `__getattr__` | C: 지연 고정점 | D: 데코레이터 |
-|---------------------------|:-:|:-:|:-:|:-:|
-| 줄 수 (인프라 + 부트스트랩) | 153 | 198 | 169 | 130 |
-| `final` 메커니즘          | `self` (MRO) | `_final` 참조 | `LazyAttrSet` 프록시 | `self` (MRO) |
-| `prev` 메커니즘           | `self._prev` (수동) | `_prev` 체인 | `prev` 딕셔너리 | `self._prev` (자동) |
-| IDE 자동완성              | 가능 | 불가 | 불가 | 부분적 |
-| 타입 검사                 | 가능 | 불가 | 불가 | 부분적 |
-| 동적 합성                 | 불가 | 가능 | 가능 | 불가 |
-| 재귀 감지                 | 없음 (행) | 없음 (행) | 있음 (진단 메시지) | 없음 (행) |
-| Nix 충실도                | 낮음 | 중간 | 높음 | 중간 |
-| 오버레이당 보일러플레이트  | ~10줄 | ~5줄 | ~5줄 | ~3줄 |
+|                          | A: 상속 | B: `__getattr__` | C: 지연 고정점 | D: 데코레이터 |
+|--------------------------|:-:|:-:|:-:|:-:|
+| `final` 메커니즘         | `self` (MRO) | `_final` 참조 | `LazyAttrSet` 프록시 | `self` (MRO) |
+| `prev` 메커니즘          | `self._prev` (수동) | `_prev` 체인 | `prev` 딕셔너리 | `self._prev` (자동) |
+| IDE 자동완성             | 가능 | 불가 | 불가 | 부분적 |
+| 타입 검사                | 가능 | 불가 | 불가 | 부분적 |
+| 동적 합성                | 불가 | 가능 | 가능 | 불가 |
+| 재귀 안전성              | 함정 (문서화) | 무한루프 | 감지 + 진단 | 안전 (데코레이터) |
+| Nix 충실도               | 낮음 | 중간 | 높음 | 중간 |
+| 메모리 (7단계)           | 7개 인스턴스 트리 | 1개 체인 | 1개 고정점 | 7개 인스턴스 트리 |
+
+### pixpkgs 권장 패턴
+
+**패턴 A (클래스 상속)**가 pixpkgs의 권장 패턴입니다. 표준 구현은 `pixpkgs/bootstrap.py`에 있습니다.
+
+1. **대규모에서 IDE 지원은 필수.** 수천 개의 패키지에서 개발자는 자동완성, 정의로 이동, 타입 검사가 필요합니다.
+2. **`PackageSet.call()`을 통한 `callPackage`**는 임의의 수의 패키지로 확장됩니다 (각각 별도 파일).
+3. **부트스트랩 단계는 고정** — 동적 합성은 이점 없이 복잡성만 추가합니다.
+4. **사용자 수준 커스터마이징**은 `Package.override()` (개별 패키지) 또는 서브클래싱 (셋 수준 변경)으로 작동합니다.
+5. **"정적 합성"은 기능** — 부트스트랩 체인을 명시적이고 검사 가능하게 만듭니다.
 
 ### 언제 무엇을 사용할 것인가
 
-- **A** — 체인이 작고 정적이며, 완전한 IDE 지원을 원할 때.
+- **A** — 프로덕션 패키지 셋에 권장. 완전한 IDE 지원, 타입 검사, `callPackage`가 대규모 패키지 수로 확장.
 - **B** — 오버레이를 동적으로 합성해야 할 때 (플러그인 시스템).
-- **C** — Nix 의미론을 충실하게 모델링하는 것이 중요할 때 (교육용, Nix 코드 1:1 포팅).
-- **D** — Python 프로젝트에 가장 균형 잡힌 선택: 최소 보일러플레이트, IDE 친화적 기본 클래스, 선언적 오버레이 구문.
+- **C** — Nix 의미론을 충실하게 모델링할 때 (교육용, Nix 코드 포팅).
+- **D** — A의 최소 보일러플레이트 변형이지만, 동적 클래스 생성이 디버깅을 복잡하게 함.
 
 ---
 
@@ -335,4 +360,4 @@ hello-2.12.2.drv
   source:  hello-2.12.2.tar.gz (fetchurl로 가져옴)
 ```
 
-최종 stdenv의 38개 입력 derivation은 모두 오버레이 체인을 통해 단일 bootstrap-tools 타볼로 추적됩니다.
+클로저의 196개 derivation — 부트스트랩 씨앗부터 hello까지 — 모두 오버레이 체인을 통해 단일 bootstrap-tools 타볼로 추적됩니다. 네 가지 실험과 표준 `pixpkgs/bootstrap.py`가 전체 체인을 재구성하며, 실제 nixpkgs와 해시가 완전히 일치합니다.

@@ -89,6 +89,25 @@ def make_fixed_output_path(
     return make_store_path("output:out", inner_hash, name)
 
 
+def path_to_store_path(path: str, name: str | None = None) -> str:
+    """Compute the store path for a local file or directory.
+
+    Like ``nix-store --add`` or ``builtins.path`` — NAR-serializes the path,
+    hashes it, and computes the /nix/store/... path without touching the daemon.
+
+    Args:
+        path: Local filesystem path to hash.
+        name: Nix store name (defaults to the basename of path).
+    """
+    from pathlib import Path as P
+
+    from pix.nar import nar_hash as _nar_hash
+
+    p = P(path)
+    h = _nar_hash(str(p))
+    return make_source_store_path(name or p.name, h)
+
+
 def make_output_path(drv_hash: bytes, output_name: str, name: str) -> str:
     """Store path for a derivation output.
 

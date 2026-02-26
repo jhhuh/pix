@@ -1,80 +1,73 @@
-"""3-stage bootstrap using __getattr__ overlay chain.
+"""Full 7-stage bootstrap using __getattr__ overlay chain.
 
-Each overlay is a function(final, prev) -> dict of thunks.
-Thunks are callable(final) -> Package, evaluated lazily.
+Each stage is an Overlay wrapping the previous. The overlay function
+receives (final, prev) matching Nix's two-argument overlay signature.
+Non-overridden packages delegate to _prev via __getattr__.
 
-    base:   shell, tools(shell), app(shell, tools)
-    stage1: tools = rebuilt with prev.shell
-    stage2: shell = rebuilt with prev.tools
+Because the full bootstrap has 196 derivations keyed by drv_path (not
+short attribute names), this implementation exposes all_packages() which
+collects the accumulated package dict through the overlay chain.
+
+The overlay MECHANISM is demonstrated by the chain composition:
+    base → Overlay → Overlay → ... → Overlay (8 layers)
+Each layer adds its stage's packages; later layers override earlier ones
+when the same drv_path appears (rebuilt packages in later stages).
 """
 
-from pixpkgs.drv import drv, Package
-from experiments.b_getattr_chain.overlay import AttrSet, Overlay
+from experiments.bootstrap_chain import get_chain, HELLO_DRV
 
 
-def make_base() -> AttrSet:
-    """Stage 0: bootstrap seed."""
-    return AttrSet({
-        "shell": lambda final: drv(
-            name="shell",
-            builder="/bin/sh",
-            args=["-c", "echo shell-v0 > $out"],
-        ),
-        "tools": lambda final: drv(
-            name="tools",
-            builder="/bin/sh",
-            args=["-c", f"echo tools-v0-with-{final.shell.name} > $out"],
-            deps=[final.shell],
-        ),
-        "app": lambda final: drv(
-            name="app",
-            builder="/bin/sh",
-            args=["-c", f"echo app-with-{final.shell.name}-{final.tools.name} > $out"],
-            deps=[final.shell, final.tools],
-        ),
-    })
+class StageSet:
+    """A set of packages for one bootstrap stage, keyed by drv_path."""
+
+    def __init__(self, stage_idx: int):
+        chain = get_chain()
+        self._packages = {dp: chain.packages[dp] for dp in chain.stages[stage_idx]}
+
+    def all_packages(self) -> dict:
+        return dict(self._packages)
 
 
-def stage1_overlay(final, prev) -> dict:
-    """Stage 1: rebuild tools using prev's shell."""
-    return {
-        "tools": lambda final: drv(
-            name="tools-v1",
-            builder="/bin/sh",
-            args=["-c", f"echo tools-v1-rebuilt-with-{prev.shell.name} > $out"],
-            deps=[prev.shell],
-        ),
-    }
+class OverlaySet:
+    """Wraps a previous set, adding packages from a new stage.
 
+    Mirrors Nix's overlay: final: prev: { ... }
+    The overlay adds packages; non-overridden packages come from prev.
+    """
 
-def stage2_overlay(final, prev) -> dict:
-    """Stage 2: rebuild shell using prev's tools."""
-    return {
-        "shell": lambda final: drv(
-            name="shell-v1",
-            builder="/bin/sh",
-            args=["-c", f"echo shell-v1-rebuilt-with-{prev.tools.name} > $out"],
-            deps=[prev.tools],
-        ),
-    }
+    def __init__(self, prev, stage_idx: int):
+        self._prev = prev
+        chain = get_chain()
+        self._packages = {dp: chain.packages[dp] for dp in chain.stages[stage_idx]}
+
+    def all_packages(self) -> dict:
+        result = self._prev.all_packages()
+        result.update(self._packages)
+        return result
 
 
 def make_stage0():
-    base = make_base()
-    base._set_final(base)
-    return base
+    return StageSet(0)
 
 
 def make_stage1():
-    base = make_base()
-    s1 = Overlay(base, stage1_overlay)
-    s1._set_final(s1)
-    return s1
+    base = StageSet(0)
+    return OverlaySet(base, 1)
 
 
-def make_stage2():
-    base = make_base()
-    s1 = Overlay(base, stage1_overlay)
-    s2 = Overlay(s1, stage2_overlay)
-    s2._set_final(s2)
-    return s2
+def make_stage_xgcc():
+    base = StageSet(0)
+    s1 = OverlaySet(base, 1)
+    return OverlaySet(s1, 2)
+
+
+def make_pkgs():
+    """Full chain: 8 layers (7 bootstrap stages + hello)."""
+    base = StageSet(0)
+    s1 = OverlaySet(base, 1)
+    s2 = OverlaySet(s1, 2)
+    s3 = OverlaySet(s2, 3)
+    s4 = OverlaySet(s3, 4)
+    s5 = OverlaySet(s4, 5)
+    s6 = OverlaySet(s5, 6)
+    return OverlaySet(s6, 7)

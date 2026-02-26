@@ -24,7 +24,7 @@ python -m pix path-info <store-path>          # query daemon
 python -m pix is-valid <store-path>           # check path validity
 python -m pix add-text <name> [content]       # add text to store
 python -m pix build <path>...                 # build via daemon
-pytest tests/ pixpkgs/tests/ -v               # 47 tests (28 pix + 19 pixpkgs)
+pytest tests/ pixpkgs/tests/ -v               # 92 tests (28 pix + 64 pixpkgs)
 mkdocs serve                                  # docs at localhost:8000
 ```
 
@@ -45,9 +45,12 @@ Also: `pix/main.py` (CLI), `docs/` (MkDocs site)
 
 Separate subdirectory that builds on pix's low-level primitives to provide a high-level package construction API, mapping Nix patterns to Python idioms.
 
-1. `pixpkgs/drv.py` — `drv()` constructor (like `mkDerivation`): takes readable args, runs the 6-step derivation pipeline (blank outputs → hashDerivationModulo → make_output_path → fill → serialize → .drv store path). Returns a frozen `Package` dataclass with `out`, `__str__` (string interpolation context), and `override()` (like `pkg.override` in Nix).
-2. `pixpkgs/package_set.py` — `PackageSet` base class with `call()`: auto-injects dependencies via `inspect.signature` + `getattr` (Python equivalent of Nix's `callPackage` pattern).
-3. `pixpkgs/realize.py` — `realize()`: recursively registers `.drv` files in the store via `add_text_to_store`, then builds via `build_paths`. Handles the full dep tree.
+1. `pixpkgs/drv.py` — `drv()` constructor (raw derivation primitive): takes readable args, runs the 6-step derivation pipeline (blank outputs → hashDerivationModulo → make_output_path → fill → serialize → .drv store path). Returns a frozen `Package` dataclass with `out`, `__str__` (string interpolation context), and `override()` (like `pkg.override` in Nix).
+2. `pixpkgs/fetchurl.py` — `fetchurl()`: Python equivalent of `<nix/fetchurl.nix>`. Uses `builtin:fetchurl` builder for fixed-output downloads.
+3. `pixpkgs/mk_derivation.py` — `mk_derivation()`: Python equivalent of `stdenv.mkDerivation`. Wraps `drv()` with standard env vars, source-stdenv.sh/default-builder.sh pattern.
+4. `pixpkgs/package_set.py` — `PackageSet` base class with `call()`: auto-injects dependencies via `inspect.signature` + `getattr` (Python equivalent of Nix's `callPackage` pattern).
+5. `pixpkgs/bootstrap.py` — Bootstrap chain (Stage0 → Stage1 → ... → Pkgs). Hand-written package definitions like nixpkgs .nix files, hash-perfect against real nixpkgs. Currently: Stage0 (4 pkgs) + Stage1 (8 pkgs).
+6. `pixpkgs/realize.py` — `realize()`: recursively registers `.drv` files in the store via `add_text_to_store`, then builds via `build_paths`. Handles the full dep tree.
 
 Python idioms mapping to Nix:
 - `callPackage` → `inspect.signature` + `getattr` (`PackageSet.call`)

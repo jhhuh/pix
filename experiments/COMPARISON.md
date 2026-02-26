@@ -1,7 +1,8 @@
 # Overlay Pattern Comparison
 
 Four Python patterns for implementing Nix's overlay/fixed-point semantics.
-All four pass the same 9 tests — late binding, override propagation, caching.
+All four express the full nixpkgs bootstrap chain (7 stages, 196 derivations → hello),
+hash-perfect against real nixpkgs.
 
 ## The Problem
 
@@ -21,23 +22,22 @@ but there's no native `prev`. Each experiment solves this differently.
 ## A: Class Inheritance
 
 ```
-experiments/a_class_inherit/   153 lines (pkgset.py + bootstrap.py)
+experiments/a_class_inherit/   pkgset.py + bootstrap.py
 ```
 
 ```python
 class Stage0(PackageSet):
     @cached_property
-    def shell(self): ...
-    @cached_property
-    def tools(self): return drv(deps=[self.shell])   # self = final
-    @cached_property
-    def app(self):   return drv(deps=[self.shell, self.tools])
+    def all_packages(self): ...  # 4 seed packages
 
 class Stage1(Stage0):
     @cached_property
-    def _prev(self): return Stage0()                 # prev = separate instance
+    def _prev(self): return Stage0()
     @cached_property
-    def tools(self): return drv(deps=[self._prev.shell])  # build dep from prev
+    def all_packages(self):
+        return {**self._prev.all_packages, **self._own_packages}
+
+# 8 classes: Stage0 → Stage1 → StageXgcc → Stage2 → Stage3 → Stage4 → Final → Pkgs
 ```
 
 **final**: `self` — Python's MRO resolves to the most-derived override.
@@ -51,128 +51,110 @@ class Stage1(Stage0):
 
 **Weaknesses**:
 - Static composition. Overlay list is fixed at class definition time.
-- Naive `self`-only approach causes infinite recursion (see below).
-- Each stage must manually define `_prev` with the correct parent class.
-- Adding a stage between two existing stages requires editing the class that was previously "next".
-
-**Infinite recursion pitfall**: The first attempt used `self.shell` everywhere (no `_prev`). This creates a cycle when Stage2.shell depends on `self.tools` and Stage1.tools depends on `self.shell` — both resolve via MRO to the most-derived override, chasing each other indefinitely. `super()` doesn't fix it because `self` stays bound to the most-derived instance. `@cached_property` doesn't break it because caching only works after computation, not during. Full analysis in `artifacts/skills/python-class-inheritance-infinite-recursion-in-overlay-pattern.md`.
+- `_prev` creates separate instance per stage — 7-deep cascade for the full bootstrap (lazy, so cost is proportional to overrides actually accessed).
+- Infinite recursion pitfall when an override uses `self.X` and X is overridden by a later stage. See `artifacts/skills/python-class-inheritance-infinite-recursion-in-overlay-pattern.md`.
 
 ---
 
 ## B: `__getattr__` Chain
 
 ```
-experiments/b_getattr_chain/   198 lines (overlay.py + bootstrap.py)
+experiments/b_getattr_chain/   overlay.py + bootstrap.py
 ```
 
 ```python
-base = AttrSet({
-    "shell": lambda final: drv(...),
-    "tools": lambda final: drv(deps=[final.shell]),
-    "app":   lambda final: drv(deps=[final.shell, final.tools]),
-})
-stage1 = Overlay(base, lambda final, prev: {
-    "tools": lambda final: drv(deps=[prev.shell]),
-})
-stage2 = Overlay(stage1, lambda final, prev: {
-    "shell": lambda final: drv(deps=[prev.tools]),
-})
-stage2._set_final(stage2)  # propagate final ref down the chain
+base = StageSet(stage_idx=0)          # 4 packages
+s1   = OverlaySet(base, stage_idx=1)  # adds 8 packages
+s2   = OverlaySet(s1, stage_idx=2)    # adds 6 packages
+...
+top  = OverlaySet(s6, stage_idx=7)    # adds hello
 ```
 
-**final**: `_final` reference propagated through the chain via `_set_final()`.
-**prev**: The `_prev` link — each `Overlay` wraps the previous layer. `__getattr__` delegates to `_prev` for non-overridden attributes.
+**final**: Shared via `_set_final()` propagation (not used in full bootstrap since packages are pre-computed).
+**prev**: `_prev` link — each `OverlaySet` wraps the previous layer.
 
 **Strengths**:
 - Dynamic composition. Overlays can be added at runtime; no class hierarchy needed.
 - Closest to how Nix overlays actually work conceptually.
 - Both `final` and `prev` are explicit function arguments — no ambiguity.
-- Natural for programmatically-generated overlay lists.
 
 **Weaknesses**:
-- Most code (198 lines). `object.__setattr__` / `object.__getattribute__` boilerplate everywhere to avoid `__getattr__` interception.
-- No IDE completion for virtual attributes. `stage2.shell` is invisible to static analysis.
-- Debugging is hard — `__getattr__` chains don't show in stack traces clearly.
-- Must manually call `_set_final()` to wire up open recursion. Forgetting this breaks everything silently.
-- Mutable `_final` reference: if you compose the same `AttrSet` into two different chains, the second `_set_final()` corrupts the first chain. Requires creating fresh objects per chain.
+- No IDE completion for virtual attributes.
+- `_set_final()` is a mutable side-effect — corrupts if same overlay used in two chains.
+- `object.__setattr__` / `object.__getattribute__` boilerplate everywhere.
+- Debugging `__getattr__` chains is hard.
 
 ---
 
 ## C: Lazy Fix
 
 ```
-experiments/c_lazy_fix/        169 lines (lazy.py + bootstrap.py)
+experiments/c_lazy_fix/        lazy.py + bootstrap.py
 ```
 
 ```python
-def base_overlay(final, prev):
-    return {
-        "shell": lambda: drv(...),
-        "tools": lambda: drv(deps=[final.shell]),
-        "app":   lambda: drv(deps=[final.shell, final.tools]),
-    }
-
-def stage1_overlay(final, prev):
-    return {"tools": lambda: drv(deps=[prev["shell"]()])}
-
-result = fix(compose_overlays([base_overlay, stage1_overlay, stage2_overlay]))
+result = fix(compose_overlays([
+    base_overlay,          # stage0: 4 packages
+    stage1_overlay,        # +8
+    stage_xgcc_overlay,    # +6
+    stage2_overlay,        # +44
+    stage3_overlay,        # +23
+    stage4_overlay,        # +19
+    final_overlay,         # +63
+    hello_overlay,         # +29 = 196 total
+]))
 ```
 
-**final**: The `LazyAttrSet` passed to overlays by `fix()` — attribute access triggers thunk evaluation.
-**prev**: A plain dict of thunks from previously-composed layers. Access via `prev["name"]()`.
+**final**: The `LazyAttrSet` passed to overlays by `fix()`.
+**prev**: A plain dict of thunks from previously-composed layers.
 
 **Strengths**:
-- Direct translation of Nix's `lib.fix` and `lib.composeExtensions`. If you know Nix, you can read this immediately.
-- Overlays are plain functions — no classes, no inheritance, no decorators.
-- `_evaluating` set provides clear infinite-recursion detection with a diagnostic message.
-- Composition is a pure fold: `compose_overlays` merges dicts left-to-right.
+- Direct translation of Nix's `lib.fix` and `lib.composeExtensions`.
+- Overlays are plain functions — most composable, most modular.
+- `_evaluating` set provides clear infinite-recursion detection.
 - Immutable by construction: each `fix()` call produces a new `LazyAttrSet`.
+- Single fixed-point object — no instance cascade.
 
 **Weaknesses**:
-- Two APIs for the same thing: `final.shell` (attribute access) vs `prev["shell"]()` (dict + call). Easy to mix up.
-- No type safety. Typos in string keys fail at runtime, not import time.
-- No IDE support for attributes on `LazyAttrSet` or keys in `prev` dicts.
-- Zero-arg thunks (`lambda: ...`) add noise. Every value is wrapped in an extra lambda compared to the other patterns.
+- Two APIs: `final.attr` vs `prev["name"]()` — confusing.
+- No type safety. No IDE support.
+- Zero-arg thunks add noise everywhere.
 
 ---
 
 ## D: Class Decorator
 
 ```
-experiments/d_decorator/       130 lines (decorator.py + bootstrap.py)
+experiments/d_decorator/       decorator.py + bootstrap.py
 ```
 
 ```python
 class Stage0(PackageSet):
     @cached_property
-    def shell(self): ...
-    @cached_property
-    def tools(self): return drv(deps=[self.shell])
-    @cached_property
-    def app(self):   return drv(deps=[self.shell, self.tools])
+    def all_packages(self): ...  # 4 seed packages
 
-@overlay(
-    tools=lambda self, prev: drv(deps=[prev.shell]),
-)
-class Stage1(Stage0):
-    pass
+@stage_overlay(1)
+class Stage1(Stage0): pass
+
+@stage_overlay(2)
+class StageXgcc(Stage1): pass
+
+# ... through @stage_overlay(7) class Pkgs(Final): pass
 ```
 
-**final**: `self` — same as Experiment A, MRO-based late binding.
-**prev**: `self._prev` — injected automatically by the `@overlay` decorator.
+**final**: `self` — same as A, MRO-based late binding.
+**prev**: `self._prev` — injected automatically by the decorator.
 
 **Strengths**:
-- Least code (130 lines). Decorator hides all the `_prev` / `cached_property` wiring.
-- Overlay body is declarative: `@overlay(tools=lambda self, prev: ...)`.
-- Combines inheritance's late binding with dynamic overlay specification.
-- Stage classes are empty (`pass`) — the decorator does all the work.
-- Base class (Stage0) is identical to Experiment A — same IDE support, same type annotations.
+- Least boilerplate per stage — decorator hides all wiring.
+- Declarative: `@stage_overlay(n)` is the entire stage definition.
+- Base class (Stage0) has full IDE support.
 
 **Weaknesses**:
-- `type(cls.__name__, (cls,), attrs)` dynamically creates classes. Debugger and IDE see generated classes, not the source.
-- `isinstance` checks can be surprising: the decorated `Stage1` is not the class written in source — it's a dynamically-created subclass.
-- Decorator internals are non-trivial (closure over `make_prop`, `_b=base` default-arg capture).
-- Same static-composition limitation as A: can't add overlays at runtime without creating new classes.
+- `type(cls.__name__, (cls,), attrs)` creates dynamic classes — debugger sees generated classes.
+- Same `_prev` cascade as A.
+- Decorator internals are non-trivial.
+- `isinstance` checks can surprise.
 
 ---
 
@@ -180,41 +162,40 @@ class Stage1(Stage0):
 
 |                          | A: Inheritance | B: `__getattr__` | C: Lazy Fix | D: Decorator |
 |--------------------------|:-:|:-:|:-:|:-:|
-| Lines (infra + bootstrap) | 153 | 198 | 169 | 130 |
 | `final` mechanism        | `self` (MRO) | `_final` ref | `LazyAttrSet` proxy | `self` (MRO) |
 | `prev` mechanism         | `self._prev` (manual) | `_prev` chain | `prev` dict | `self._prev` (auto) |
 | IDE completion           | yes | no | no | partial |
 | Type checking            | yes | no | no | partial |
 | Dynamic composition      | no | yes | yes | no |
-| Recursion safety         | pitfall (see above) | silent hang | detected + diagnostic | safe (decorator handles it) |
+| Recursion safety         | pitfall (documented) | silent hang | detected + diagnostic | safe (decorator) |
 | Nix fidelity             | low | medium | high | medium |
-| Boilerplate per overlay  | ~10 lines | ~5 lines | ~5 lines | ~3 lines |
+| Memory (7 stages)        | 7 instance trees | 1 chain | 1 fixed-point | 7 instance trees |
 
-### Nix fidelity
+### Full bootstrap results
 
-How closely does each pattern mirror Nix's actual mechanism?
+All four patterns compose the complete nixpkgs bootstrap chain:
 
-- **C** is a direct translation: `fix`, `compose_overlays`, `(final, prev) -> dict` are line-for-line equivalents of `lib.fix`, `lib.composeExtensions`, `final: prev: { ... }`.
-- **B** captures the same semantics dynamically but wraps them in Python objects rather than plain functions.
-- **D** maps Nix overlays to decorators — same semantics, different surface syntax.
-- **A** maps overlays to class inheritance — the furthest departure. The fixed-point is implicit in `self`, and `prev` requires manual plumbing.
+| Stage | New packages | Cumulative | Key builds |
+|-------|:---:|:---:|---|
+| stage0 | 4 | 4 | busybox, tarball, bootstrap-tools, stage0-stdenv |
+| stage1 | 8 | 12 | binutils-wrapper, gcc-wrapper, gnu-config |
+| stage-xgcc | 6 | 18 | xgcc-14.3.0, gmp, mpfr, isl, libmpc |
+| stage2 | 44 | 62 | glibc-2.40, binutils, bison, perl (libc transition) |
+| stage3 | 23 | 85 | gcc-14.3.0, linux-headers (compiler transition) |
+| stage4 | 19 | 104 | coreutils, bash rebuild (tools transition) |
+| final | 63 | 167 | stdenv-linux, gcc-wrapper, coreutils, findutils... |
+| hello | 29 | **196** | **hello-2.12.2**, curl, openssl, perl |
 
-### When to use which
+Every derivation is hash-perfect against real nixpkgs (verified by ATerm byte comparison).
 
-- **A (Inheritance)**: When the stage chain is known at definition time and you want full IDE support. Good for small, well-understood bootstrap sequences.
-- **B (`__getattr__`)**: When overlays must be composed dynamically (e.g., user-provided plugin overlays). Pays for flexibility with debugging difficulty.
-- **C (Lazy Fix)**: When faithfully modeling Nix semantics matters more than Python ergonomics. Best for educational purposes or when porting Nix code 1:1.
-- **D (Decorator)**: Best overall balance for Python projects. Minimal boilerplate, clear separation of base and overlay, IDE-friendly base classes. Use when the overlay chain is known at definition time but you want cleaner syntax than raw inheritance.
+### Recommendation for pixpkgs
 
----
+**Pattern A (Class Inheritance)** is the recommended pattern for pixpkgs:
 
-## Open Question: Scale
+1. **IDE support at scale is non-negotiable.** With thousands of packages, developers need autocomplete, go-to-definition, and type checking.
+2. **`callPackage` via `PackageSet.call()`** scales to any number of packages (each in a separate file).
+3. **The bootstrap stages are fixed** — dynamic composition adds complexity without benefit.
+4. **User-level customization** works through `Package.override()` (individual packages) or subclassing (set-level changes).
+5. **"Static composition" is a feature** — it makes the bootstrap chain explicit and inspectable.
 
-Nix's nixpkgs has ~100,000 packages in a single attribute set. In Python:
-
-- **A and D** (class-based): Each package is a `@cached_property`. Defining 100K methods on a class is unusual but technically works — `cached_property` stores values in `instance.__dict__`, which is just a dict. Memory: one dict entry per evaluated package.
-- **B and C** (dict-based): Thunks are entries in a plain dict. 100K entries is trivial. Memory: same — one entry per evaluated thunk.
-
-The real concern is not storage but **definition ergonomics**. 100K `@cached_property` methods in a single class file is absurd. Nix solves this with `callPackage` — each package is a separate file, auto-imported. The Python equivalent is `PackageSet.call()` (Experiment A's `pkgset.py`) or a registry pattern that dynamically adds attributes.
-
-All four patterns are compatible with a `callPackage`-like auto-import mechanism. The choice of overlay pattern is orthogonal to how packages are defined and loaded.
+The canonical implementation lives in `pixpkgs/bootstrap.py`.

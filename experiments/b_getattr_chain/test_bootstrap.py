@@ -1,72 +1,53 @@
-"""Tests for __getattr__ overlay chain pattern.
+"""Tests for __getattr__ overlay chain with full 7-stage bootstrap.
 
-Same test scenarios as Experiment A to enable direct comparison.
+Verifies that the overlay chain correctly composes all 196 derivations
+from nixpkgs bootstrap seed through to hello, hash-perfect.
 """
 
-from experiments.b_getattr_chain.bootstrap import make_stage0, make_stage1, make_stage2
+from experiments.b_getattr_chain.bootstrap import (
+    make_stage0, make_stage1, make_stage_xgcc, make_pkgs,
+)
+from experiments.bootstrap_chain import get_chain, HELLO_DRV, HELLO_OUT
 
 
-def test_stage0_self_consistent():
-    s = make_stage0()
-    assert s.shell.name == "shell"
-    assert s.tools.name == "tools"
-    assert s.app.name == "app"
-    assert s.shell.drv_path in s.app.drv.input_drvs
-    assert s.tools.drv_path in s.app.drv.input_drvs
+class TestStageProgression:
+    def test_stage0_has_4_packages(self):
+        assert len(make_stage0().all_packages()) == 4
+
+    def test_stage1_has_12_packages(self):
+        assert len(make_stage1().all_packages()) == 12
+
+    def test_stage_xgcc_has_18_packages(self):
+        assert len(make_stage_xgcc().all_packages()) == 18
+
+    def test_pkgs_has_196_packages(self):
+        assert len(make_pkgs().all_packages()) == 196
 
 
-def test_stage1_overrides_tools():
-    s = make_stage1()
-    assert s.shell.name == "shell"       # inherited from base
-    assert s.tools.name == "tools-v1"    # overridden
+class TestHashPerfect:
+    def test_all_196_hashes_match(self):
+        pkgs = make_pkgs().all_packages()
+        chain = get_chain()
+        for drv_path, pkg in pkgs.items():
+            assert pkg.drv_path == drv_path
+
+    def test_hello(self):
+        pkgs = make_pkgs().all_packages()
+        assert pkgs[HELLO_DRV].drv_path == HELLO_DRV
+        assert pkgs[HELLO_DRV].out == HELLO_OUT
 
 
-def test_stage1_app_uses_new_tools():
-    """Late binding: app's thunk sees final.tools = stage1's tools."""
-    s0 = make_stage0()
-    s1 = make_stage1()
-    assert s1.tools.drv_path in s1.app.drv.input_drvs
-    assert s1.app.out != s0.app.out
+class TestOverlayBehavior:
+    def test_later_stages_include_earlier(self):
+        s0 = make_stage0().all_packages()
+        s1 = make_stage1().all_packages()
+        for dp in s0:
+            assert dp in s1
 
-
-def test_stage1_shell_unchanged():
-    s0 = make_stage0()
-    s1 = make_stage1()
-    assert s1.shell.out == s0.shell.out
-
-
-def test_stage2_overrides_shell():
-    s = make_stage2()
-    assert s.shell.name == "shell-v1"    # overridden
-    assert s.tools.name == "tools-v1"    # inherited from stage1
-
-
-def test_stage2_app_uses_new_shell():
-    """Late binding: app sees final.shell = stage2's shell."""
-    s1 = make_stage1()
-    s2 = make_stage2()
-    assert s2.shell.drv_path in s2.app.drv.input_drvs
-    assert s2.tools.drv_path in s2.app.drv.input_drvs
-    assert s2.app.out != s1.app.out
-
-
-def test_all_stages_different_app():
-    s0, s1, s2 = make_stage0(), make_stage1(), make_stage2()
-    assert s0.app.out != s1.app.out
-    assert s1.app.out != s2.app.out
-    assert s0.app.out != s2.app.out
-
-
-def test_stage2_tools_same_as_stage1():
-    """Stage2 doesn't override tools — same output path as stage1."""
-    s1 = make_stage1()
-    s2 = make_stage2()
-    assert s2.tools.out == s1.tools.out
-
-
-def test_caching():
-    """Accessing a package twice returns the same object."""
-    s = make_stage2()
-    first = s.app
-    second = s.app
-    assert first is second
+    def test_overlay_chain_adds_packages(self):
+        """Each overlay adds new packages to the chain."""
+        s0 = make_stage0().all_packages()
+        s1 = make_stage1().all_packages()
+        assert len(s1) > len(s0)
+        # Stage1 adds 8 new packages
+        assert len(s1) - len(s0) == 8
