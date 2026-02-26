@@ -24,7 +24,7 @@ python -m pix path-info <store-path>          # query daemon
 python -m pix is-valid <store-path>           # check path validity
 python -m pix add-text <name> [content]       # add text to store
 python -m pix build <path>...                 # build via daemon
-pytest tests/ pixpkgs/tests/ -v               # 92 tests (28 pix + 64 pixpkgs)
+pytest tests/ pixpkgs/tests/ -v               # ~92 tests
 mkdocs serve                                  # docs at localhost:8000
 ```
 
@@ -49,8 +49,9 @@ Separate subdirectory that builds on pix's low-level primitives to provide a hig
 2. `pixpkgs/fetchurl.py` — `fetchurl()`: Python equivalent of `<nix/fetchurl.nix>`. Uses `builtin:fetchurl` builder for fixed-output downloads.
 3. `pixpkgs/mk_derivation.py` — `mk_derivation()`: Python equivalent of `stdenv.mkDerivation`. Wraps `drv()` with standard env vars, source-stdenv.sh/default-builder.sh pattern.
 4. `pixpkgs/package_set.py` — `PackageSet` base class with `call()`: auto-injects dependencies via `inspect.signature` + `getattr` (Python equivalent of Nix's `callPackage` pattern).
-5. `pixpkgs/bootstrap.py` — Bootstrap chain (Stage0 → Stage1 → ... → Pkgs). Hand-written package definitions like nixpkgs .nix files, hash-perfect against real nixpkgs. Currently: Stage0 (4 pkgs) + Stage1 (8 pkgs).
-6. `pixpkgs/realize.py` — `realize()`: recursively registers `.drv` files in the store via `add_text_to_store`, then builds via `build_paths`. Handles the full dep tree.
+5. `pixpkgs/bootstrap/` — Bootstrap chain stages (Stage0 → Stage1 → StageXgcc → ...). Hand-written package definitions in `pixpkgs/pkgs/` for key packages, hash-perfect against real nixpkgs.
+6. `pixpkgs/bootstrap/closure.py` — `load_hello_closure()`: auto-builds ALL 196 derivations in `nixpkgs#hello` closure from .drv files. One `package_from_drv()` function handles all types (fetchurl, compiled, hooks, stdenvs). No per-package Python files needed for stage variants.
+7. `pixpkgs/realize.py` — `realize()`: recursively registers `.drv` files in the store via `add_text_to_store`, then builds via `build_paths`. Handles the full dep tree.
 
 Python idioms mapping to Nix:
 - `callPackage` → `inspect.signature` + `getattr` (`PackageSet.call`)
@@ -65,6 +66,10 @@ Python idioms mapping to Nix:
 - **The reference nixpkgs** is pinned in `flake.lock` (nixos-24.11 branch). All expected hashes are relative to this revision.
 - **Use pix library for hash computation** — the repo has all machinery to compute derivation hashes from scratch (drv.py, store_path.py, hash.py). Verify by computing in Python, not by querying nix-store.
 - Understand WHY each env var and dependency exists, don't mechanically copy.
+- **Bootstrap closure structure**: 196 drvs in `nixpkgs#hello` closure, only 147 unique pnames. 31 packages are rebuilt across stages (bash 5x, gnu-config 6x). 58 are fetchurl sources, 13 are stdenvs, 16 are setup hooks. Don't write per-stage Python files for each rebuild — `closure.py` auto-handles all 196 from .drv files. Hand-write `pixpkgs/pkgs/*.py` only for key packages where understanding the logic matters.
+- **`placeholder("out")`** survives into .drv files unchanged. Replaced at build time by setup.sh, NOT during derivation construction. See `pix/store_path.py:placeholder()`.
+- **Nix null-key pattern**: `{ ${null} = "value"; }` == `{}`. Used in make-derivation.nix for conditional env vars.
+- **outputs env var order**: "out" first, rest preserves Nix source order (NOT alphabetical). ATerm outputs section IS alphabetical.
 
 ## Key gotchas
 

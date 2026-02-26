@@ -10,6 +10,7 @@ Package definitions live in ``pixpkgs.pkgs.*`` (like nixpkgs ``pkgs/`` files).
 Stage classes compose them via class inheritance (Pattern A from overlays.md).
 """
 
+from pixpkgs.bootstrap.closure import load_by_stage, load_hello_closure
 from pixpkgs.bootstrap.stage0 import EXPECTED_STAGE0, Stage0
 from pixpkgs.bootstrap.stage1 import EXPECTED_STAGE1, Stage1
 from pixpkgs.bootstrap.stage_xgcc import EXPECTED_STAGE_XGCC, StageXgcc
@@ -18,4 +19,5 @@ __all__ = [
     "Stage0", "EXPECTED_STAGE0",
     "Stage1", "EXPECTED_STAGE1",
     "StageXgcc", "EXPECTED_STAGE_XGCC",
+    "load_hello_closure", "load_by_stage",
 ]

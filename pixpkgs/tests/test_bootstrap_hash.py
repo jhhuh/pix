@@ -11,6 +11,7 @@ The expected hashes come from: nix eval nixpkgs#stdenv (Nix 2.28, nixpkgs master
 import subprocess
 import pytest
 from pix.derivation import parse, serialize
+from pixpkgs.bootstrap.closure import load_hello_closure, package_from_drv
 from pixpkgs.drv import drv, Package
 
 # --- Bootstrap seed: two fixed-output fetches + unpack ---
@@ -208,76 +209,13 @@ class TestStage0:
 
 
 # --- Full chain: all 196 derivations from seed to hello ---
-
-def _make_package_from_drv(drv_path, dep_packages):
-    """Read a .drv file and reconstruct a matching Package using drv()."""
-    drv_text = open(drv_path).read()
-    parsed = parse(drv_text)
-    is_fixed = (len(parsed.outputs) == 1 and "out" in parsed.outputs
-                and parsed.outputs["out"].hash_algo != "")
-    name = drv_path.rsplit("/", 1)[1].split("-", 1)[1][:-4]
-    deps = [dep_packages[dp] for dp in sorted(parsed.input_drvs) if dp in dep_packages]
-    env = dict(parsed.env)
-    for k in {"name", "builder", "system"}:
-        env.pop(k, None)
-    for oname in parsed.outputs:
-        env.pop(oname, None)
-    kwargs = dict(
-        name=name, builder=parsed.builder, system=parsed.platform,
-        args=parsed.args if parsed.args else None,
-        env=env if env else None,
-        output_names=sorted(parsed.outputs) if sorted(parsed.outputs) != ["out"] else None,
-        deps=deps if deps else None,
-        srcs=parsed.input_srcs if parsed.input_srcs else None,
-        input_drvs={dp: outs for dp, outs in parsed.input_drvs.items()},
-    )
-    if is_fixed:
-        o = parsed.outputs["out"]
-        algo = o.hash_algo
-        if algo.startswith("r:"):
-            kwargs["output_hash_mode"] = "recursive"
-            algo = algo[2:]
-        else:
-            kwargs["output_hash_mode"] = "flat"
-        kwargs["output_hash_algo"] = algo
-        kwargs["output_hash"] = o.hash_value
-    return drv(**kwargs)
+# Uses load_hello_closure() from pixpkgs.bootstrap.closure which
+# reconstructs every derivation from .drv files using drv() directly.
 
 
 class TestFullChain:
     def test_all_196_derivations_match_hello_closure(self):
         """Reconstruct every derivation in nixpkgs#hello's closure and verify
         byte-identical ATerm output — validates the entire hash pipeline."""
-        hello_drv = subprocess.run(
-            ["nix", "eval", "nixpkgs#hello.drvPath", "--raw"],
-            capture_output=True, text=True,
-        ).stdout
-        all_drvs = [
-            l for l in subprocess.run(
-                ["nix-store", "--query", "--requisites", hello_drv],
-                capture_output=True, text=True,
-            ).stdout.strip().split("\n")
-            if l.endswith(".drv")
-        ]
-        assert len(all_drvs) > 100, f"Expected 100+ derivations, got {len(all_drvs)}"
-
-        packages = {}
-        failures = []
-        for drv_path in all_drvs:
-            try:
-                pkg = _make_package_from_drv(drv_path, packages)
-                actual = serialize(pkg.drv)
-                expected = open(drv_path).read()
-                if actual == expected:
-                    packages[drv_path] = pkg
-                else:
-                    name = drv_path.rsplit("/", 1)[1]
-                    failures.append(f"ATerm mismatch: {name}")
-            except Exception as e:
-                name = drv_path.rsplit("/", 1)[1]
-                failures.append(f"{name}: {e}")
-
-        assert not failures, (
-            f"{len(failures)}/{len(all_drvs)} derivations failed:\n"
-            + "\n".join(failures[:10])
-        )
+        pkgs = load_hello_closure()
+        assert len(pkgs) >= 196, f"Expected 196+ derivations, got {len(pkgs)}"
