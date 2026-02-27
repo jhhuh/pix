@@ -170,8 +170,14 @@ class TestStageXgcc:
     def test_isl_out_path(self):
         assert StageXgcc().isl.out == EXPECTED_STAGE_XGCC["isl.out"]
 
-    def test_all_packages_has_31(self):
-        assert len(StageXgcc().all_packages) == 31  # 19 from stage1 + 12 new
+    def test_libmpc_drv_path(self):
+        assert StageXgcc().libmpc.drv_path == EXPECTED_STAGE_XGCC["libmpc.drv"]
+
+    def test_libmpc_out_path(self):
+        assert StageXgcc().libmpc.out == EXPECTED_STAGE_XGCC["libmpc.out"]
+
+    def test_all_packages_has_32(self):
+        assert len(StageXgcc().all_packages) == 32  # 19 from stage1 + 13 new
 
     def test_inherits_stage1(self):
         sx = StageXgcc()
