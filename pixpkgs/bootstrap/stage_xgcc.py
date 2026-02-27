@@ -25,10 +25,11 @@ from pixpkgs.bootstrap.helpers import (
 from pixpkgs.bootstrap.stage1 import Stage1
 from pixpkgs.drv import Package
 from pixpkgs.package_set import PackageSet
-from pixpkgs.bootstrap.sources import gmp_src
+from pixpkgs.bootstrap.sources import gmp_src, mpfr_src
 from pixpkgs.pkgs.cc_wrapper import make_gcc_wrapper
 from pixpkgs.pkgs.expand_response_params import make_expand_response_params
 from pixpkgs.pkgs.gmp import make_gmp
+from pixpkgs.pkgs.mpfr import make_mpfr
 from pixpkgs.pkgs.gnu_config import make_gnu_config
 from pixpkgs.pkgs.update_autotools import make_update_autotools_hook
 from pixpkgs.vendor import DEFAULT_NATIVE_BUILD_INPUTS
@@ -47,8 +48,16 @@ EXPECTED_STAGE_XGCC = {
     "gcc_wrapper.out": "/nix/store/mk49cy3kxsmxfhpjvvv8gg8nsp67knrf-bootstrap-stage-xgcc-gcc-wrapper-",
     "stdenv.drv": "/nix/store/kpb871v49izkzs3z4pbd6ayrg1x3q0ak-bootstrap-stage-xgcc-stdenv-linux.drv",
     "stdenv.out": "/nix/store/180jrl2n0wh7p4rbphy406dbxpjbp60s-bootstrap-stage-xgcc-stdenv-linux",
+    "stdenv_no_cc.drv": "/nix/store/32rk2x7f17a6n8krwhhw37df4pvajv0r-bootstrap-stage-xgcc-stdenv-linux.drv",
+    "stdenv_no_cc.out": "/nix/store/rb78bgfyckbnag1bpys0f2zipgw82jp1-bootstrap-stage-xgcc-stdenv-linux",
+    "gnu_config_pkg.drv": "/nix/store/c14yc5znpdnwlab1a2pnmnhbwdp35vp6-gnu-config-2024-01-01.drv",
+    "gnu_config_pkg.out": "/nix/store/0iz8c9d6dyq3fy9f9shk3fj7y085f7i1-gnu-config-2024-01-01",
+    "update_autotools_hook_pkg.drv": "/nix/store/qvd48yga2kyydg00lwb87mfqn31mrzh9-update-autotools-gnu-config-scripts-hook.drv",
+    "update_autotools_hook_pkg.out": "/nix/store/b6vpv6747yf3nz1rdsxlbibpfvlpw6c7-update-autotools-gnu-config-scripts-hook",
     "gmp.drv": "/nix/store/4xws3d0jp4viffjqbjv9y1ydb524ld3n-gmp-6.3.0.drv",
     "gmp.out": "/nix/store/5wxh08is7sqk98xhganbxivbvr52pp1d-gmp-6.3.0",
+    "mpfr.drv": "/nix/store/y6h178j984aih84hfi6d1gkj3p2v9ihx-mpfr-4.2.2.drv",
+    "mpfr.out": "/nix/store/d3jzigiaca36mqig1454s2xi56k62m33-mpfr-4.2.2",
 }
 
 
@@ -161,6 +170,59 @@ class StageXgcc(PackageSet):
             ],
         )
 
+    # --- xgcc package-set support ---
+    # In nixpkgs, the xgcc stage evaluates ALL of nixpkgs with xgcc stdenv.
+    # Packages like makeSetupHook use stdenvNoCC (xgcc stdenv minus gcc-wrapper).
+    # gnu-config and updateAutotoolsGnuConfigScriptsHook are rebuilt in this
+    # evaluation context, separate from the infrastructure versions above.
+
+    @cached_property
+    def stdenv_no_cc(self) -> Package:
+        """xgcc stdenv without gcc-wrapper (= stdenvNoCC in nixpkgs).
+
+        Used by makeSetupHook and other packages that don't need a compiler.
+        Same as self.stdenv but without gcc_wrapper in defaultNativeBuildInputs.
+        """
+        bt = str(self._prev._prev.bootstrap_tools)
+        hook = str(self.update_autotools_hook)
+        return make_stdenv(
+            "bootstrap-stage-xgcc-stdenv-linux",
+            shell=f"{bt}/bin/bash",
+            initial_path=bt,
+            builder=f"{bt}/bin/bash",
+            default_native_build_inputs=" ".join([
+                hook,
+                *DEFAULT_NATIVE_BUILD_INPUTS.split(),
+                # NO gcc_wrapper — this is stdenvNoCC
+            ]),
+            pre_hook=STAGE0_PREHOOK,
+            deps=[
+                self._prev._prev.bootstrap_tools,
+                self.update_autotools_hook,
+            ],
+        )
+
+    @cached_property
+    def gnu_config_pkg(self) -> Package:
+        """gnu-config built with full xgcc stdenv (for the package set)."""
+        return make_gnu_config(
+            self._prev.config_guess, self._prev.config_sub,
+            self._prev._prev.bootstrap_tools, self.stdenv,
+        )
+
+    @cached_property
+    def update_autotools_hook_pkg(self) -> Package:
+        """updateAutotoolsGnuConfigScriptsHook for xgcc package set.
+
+        Built with stdenv_no_cc (makeSetupHook uses stdenvNoCC) and
+        gnu_config_pkg (gnu-config built with full xgcc stdenv).
+        """
+        return make_update_autotools_hook(
+            self.gnu_config_pkg,
+            self._prev._prev.bootstrap_tools,
+            self.stdenv_no_cc,
+        )
+
     # --- Packages built by xgcc stdenv ---
     # These are the "overrides" from nixpkgs bootstrap-stage-xgcc.
     # gmp = super.gmp.override { cxx = false; }
@@ -177,6 +239,17 @@ class StageXgcc(PackageSet):
         )
 
     @cached_property
+    def mpfr(self) -> Package:
+        """MPFR built with xgcc stdenv."""
+        return make_mpfr(
+            bootstrap_tools=self._prev._prev.bootstrap_tools,
+            stdenv=self.stdenv,
+            src=mpfr_src(),
+            gmp=self.gmp,
+            update_autotools_hook=self.update_autotools_hook_pkg,
+        )
+
+    @cached_property
     def all_packages(self) -> dict[str, Package]:
         own = {
             self.cc_wrapper_stdenv.drv_path: self.cc_wrapper_stdenv,
@@ -185,6 +258,10 @@ class StageXgcc(PackageSet):
             self.update_autotools_hook.drv_path: self.update_autotools_hook,
             self.gcc_wrapper.drv_path: self.gcc_wrapper,
             self.stdenv.drv_path: self.stdenv,
+            self.stdenv_no_cc.drv_path: self.stdenv_no_cc,
+            self.gnu_config_pkg.drv_path: self.gnu_config_pkg,
+            self.update_autotools_hook_pkg.drv_path: self.update_autotools_hook_pkg,
             self.gmp.drv_path: self.gmp,
+            self.mpfr.drv_path: self.mpfr,
         }
         return {**self._prev.all_packages, **own}
