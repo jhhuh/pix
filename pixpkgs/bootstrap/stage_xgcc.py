@@ -25,10 +25,11 @@ from pixpkgs.bootstrap.helpers import (
 from pixpkgs.bootstrap.stage1 import Stage1
 from pixpkgs.drv import Package
 from pixpkgs.package_set import PackageSet
-from pixpkgs.bootstrap.sources import gmp_src, mpfr_src
+from pixpkgs.bootstrap.sources import gmp_src, isl_src, mpfr_src
 from pixpkgs.pkgs.cc_wrapper import make_gcc_wrapper
 from pixpkgs.pkgs.expand_response_params import make_expand_response_params
 from pixpkgs.pkgs.gmp import make_gmp
+from pixpkgs.pkgs.isl import make_isl
 from pixpkgs.pkgs.mpfr import make_mpfr
 from pixpkgs.pkgs.gnu_config import make_gnu_config
 from pixpkgs.pkgs.update_autotools import make_update_autotools_hook
@@ -58,6 +59,8 @@ EXPECTED_STAGE_XGCC = {
     "gmp.out": "/nix/store/5wxh08is7sqk98xhganbxivbvr52pp1d-gmp-6.3.0",
     "mpfr.drv": "/nix/store/y6h178j984aih84hfi6d1gkj3p2v9ihx-mpfr-4.2.2.drv",
     "mpfr.out": "/nix/store/d3jzigiaca36mqig1454s2xi56k62m33-mpfr-4.2.2",
+    "isl.drv": "/nix/store/kj32l38r9bfh4dncdf7gkscnnzysz5y7-isl-0.20.drv",
+    "isl.out": "/nix/store/x0p0rfjp51kps8qypslvz0zy24a8yv92-isl-0.20",
 }
 
 
@@ -250,6 +253,17 @@ class StageXgcc(PackageSet):
         )
 
     @cached_property
+    def isl(self) -> Package:
+        """ISL 0.20 built with xgcc stdenv (for GCC Graphite)."""
+        return make_isl(
+            bootstrap_tools=self._prev._prev.bootstrap_tools,
+            stdenv=self.stdenv,
+            src=isl_src(),
+            gmp=self.gmp,
+            update_autotools_hook=self.update_autotools_hook_pkg,
+        )
+
+    @cached_property
     def all_packages(self) -> dict[str, Package]:
         own = {
             self.cc_wrapper_stdenv.drv_path: self.cc_wrapper_stdenv,
@@ -263,5 +277,6 @@ class StageXgcc(PackageSet):
             self.update_autotools_hook_pkg.drv_path: self.update_autotools_hook_pkg,
             self.gmp.drv_path: self.gmp,
             self.mpfr.drv_path: self.mpfr,
+            self.isl.drv_path: self.isl,
         }
         return {**self._prev.all_packages, **own}
