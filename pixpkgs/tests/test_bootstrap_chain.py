@@ -98,8 +98,8 @@ class TestStage1:
     def test_stdenv_out_path(self):
         assert Stage1().stdenv.out == EXPECTED_STAGE1["stdenv.out"]
 
-    def test_all_packages_has_12(self):
-        assert len(Stage1().all_packages) == 12  # 4 from stage0 + 8 new
+    def test_all_packages_has_19(self):
+        assert len(Stage1().all_packages) == 19  # 4 from stage0 + 8 infra + 7 compiled
 
     def test_inherits_stage0(self):
         s1 = Stage1()
@@ -152,8 +152,14 @@ class TestStageXgcc:
     def test_stdenv_out_path(self):
         assert StageXgcc().stdenv.out == EXPECTED_STAGE_XGCC["stdenv.out"]
 
-    def test_all_packages_has_18(self):
-        assert len(StageXgcc().all_packages) == 18  # 12 from stage1 + 6 new
+    def test_gmp_drv_path(self):
+        assert StageXgcc().gmp.drv_path == EXPECTED_STAGE_XGCC["gmp.drv"]
+
+    def test_gmp_out_path(self):
+        assert StageXgcc().gmp.out == EXPECTED_STAGE_XGCC["gmp.out"]
+
+    def test_all_packages_has_26(self):
+        assert len(StageXgcc().all_packages) == 26  # 19 from stage1 + 7 new
 
     def test_inherits_stage1(self):
         sx = StageXgcc()

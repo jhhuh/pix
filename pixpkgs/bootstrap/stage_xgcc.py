@@ -25,8 +25,10 @@ from pixpkgs.bootstrap.helpers import (
 from pixpkgs.bootstrap.stage1 import Stage1
 from pixpkgs.drv import Package
 from pixpkgs.package_set import PackageSet
+from pixpkgs.bootstrap.sources import gmp_src
 from pixpkgs.pkgs.cc_wrapper import make_gcc_wrapper
 from pixpkgs.pkgs.expand_response_params import make_expand_response_params
+from pixpkgs.pkgs.gmp import make_gmp
 from pixpkgs.pkgs.gnu_config import make_gnu_config
 from pixpkgs.pkgs.update_autotools import make_update_autotools_hook
 from pixpkgs.vendor import DEFAULT_NATIVE_BUILD_INPUTS
@@ -45,6 +47,8 @@ EXPECTED_STAGE_XGCC = {
     "gcc_wrapper.out": "/nix/store/mk49cy3kxsmxfhpjvvv8gg8nsp67knrf-bootstrap-stage-xgcc-gcc-wrapper-",
     "stdenv.drv": "/nix/store/kpb871v49izkzs3z4pbd6ayrg1x3q0ak-bootstrap-stage-xgcc-stdenv-linux.drv",
     "stdenv.out": "/nix/store/180jrl2n0wh7p4rbphy406dbxpjbp60s-bootstrap-stage-xgcc-stdenv-linux",
+    "gmp.drv": "/nix/store/4xws3d0jp4viffjqbjv9y1ydb524ld3n-gmp-6.3.0.drv",
+    "gmp.out": "/nix/store/5wxh08is7sqk98xhganbxivbvr52pp1d-gmp-6.3.0",
 }
 
 
@@ -157,6 +161,21 @@ class StageXgcc(PackageSet):
             ],
         )
 
+    # --- Packages built by xgcc stdenv ---
+    # These are the "overrides" from nixpkgs bootstrap-stage-xgcc.
+    # gmp = super.gmp.override { cxx = false; }
+
+    @cached_property
+    def gmp(self) -> Package:
+        """GMP built with xgcc stdenv (cxx=false for bootstrap)."""
+        return make_gmp(
+            bootstrap_tools=self._prev._prev.bootstrap_tools,
+            stdenv=self.stdenv,
+            src=gmp_src(),
+            gcc_wrapper=self.gcc_wrapper,
+            gnum4=self.gnum4,
+        )
+
     @cached_property
     def all_packages(self) -> dict[str, Package]:
         own = {
@@ -166,5 +185,6 @@ class StageXgcc(PackageSet):
             self.update_autotools_hook.drv_path: self.update_autotools_hook,
             self.gcc_wrapper.drv_path: self.gcc_wrapper,
             self.stdenv.drv_path: self.stdenv,
+            self.gmp.drv_path: self.gmp,
         }
         return {**self._prev.all_packages, **own}

@@ -11,6 +11,9 @@ Like nixpkgs/pkgs/stdenv/linux/default.nix stage 1:
   - gnu-config: config.guess + config.sub for platform detection
   - update-autotools-hook: setup hook to update stale config scripts
   - stage1-stdenv: stdenv with gcc-wrapper and hooks
+
+Packages compiled with stage1 stdenv (for use in later stages):
+  - which, zlib, gnum4, patchelf, perl, bison, bash
 """
 
 from functools import cached_property
@@ -18,14 +21,25 @@ from functools import cached_property
 from pixpkgs.bootstrap.helpers import (
     GNU_CONFIG_BASE, GNU_CONFIG_COMMIT, STAGE0_PREHOOK, make_stdenv,
 )
+from pixpkgs.bootstrap.sources import (
+    bash_patch_001, bash_patch_002, bash_patch_003, bash_src,
+    bison_src, m4_src, patchelf_src, perl_src, which_src, zlib_src,
+)
 from pixpkgs.bootstrap.stage0 import Stage0
 from pixpkgs.drv import Package
 from pixpkgs.fetchurl import fetchurl
+from pixpkgs.pkgs.bash import make_bash
 from pixpkgs.pkgs.bintools_wrapper import make_binutils_wrapper
+from pixpkgs.pkgs.bison import make_bison
 from pixpkgs.pkgs.cc_wrapper import make_gcc_wrapper
 from pixpkgs.pkgs.glibc_bootstrap import make_glibc_bootstrap_files
+from pixpkgs.pkgs.gnum4 import make_gnum4
 from pixpkgs.pkgs.gnu_config import make_gnu_config
+from pixpkgs.pkgs.patchelf import make_patchelf
+from pixpkgs.pkgs.perl import make_perl
 from pixpkgs.pkgs.update_autotools import make_update_autotools_hook
+from pixpkgs.pkgs.which import make_which
+from pixpkgs.pkgs.zlib import make_zlib
 from pixpkgs.vendor import DEFAULT_NATIVE_BUILD_INPUTS
 
 
@@ -144,6 +158,55 @@ class Stage1(Stage0):
             ],
         )
 
+    # --- Packages compiled with stage1 stdenv ---
+    # These are used by the xgcc stage and later. In nixpkgs, they come
+    # from evaluating ALL of nixpkgs with stage1's stdenv. Here we only
+    # build the ones needed for the bootstrap chain.
+
+    @cached_property
+    def which(self) -> Package:
+        return make_which(self._prev.bootstrap_tools, self.stdenv, which_src())
+
+    @cached_property
+    def zlib(self) -> Package:
+        return make_zlib(self._prev.bootstrap_tools, self.stdenv, zlib_src())
+
+    @cached_property
+    def gnum4(self) -> Package:
+        return make_gnum4(self._prev.bootstrap_tools, self.stdenv, m4_src())
+
+    @cached_property
+    def patchelf(self) -> Package:
+        return make_patchelf(self._prev.bootstrap_tools, self.stdenv, patchelf_src())
+
+    @cached_property
+    def perl(self) -> Package:
+        return make_perl(
+            self._prev.bootstrap_tools, self.stdenv, perl_src(),
+            self.zlib, self.glibc_bootstrap_files, self.gcc_wrapper,
+        )
+
+    @cached_property
+    def bison(self) -> Package:
+        return make_bison(
+            self._prev.bootstrap_tools, self.stdenv, bison_src(),
+            self.gnum4, self.perl,
+        )
+
+    @cached_property
+    def bash(self) -> Package:
+        return make_bash(
+            bootstrap_tools=self._prev.bootstrap_tools,
+            stdenv=self.stdenv,
+            src=bash_src(),
+            bash_patch_001=bash_patch_001(),
+            bash_patch_002=bash_patch_002(),
+            bash_patch_003=bash_patch_003(),
+            gcc_wrapper=self.gcc_wrapper,
+            update_autotools_hook=self.update_autotools_hook,
+            bison=self.bison,
+        )
+
     @cached_property
     def all_packages(self) -> dict[str, Package]:
         own = {
@@ -155,5 +218,12 @@ class Stage1(Stage0):
             self.update_autotools_hook.drv_path: self.update_autotools_hook,
             self.gcc_wrapper.drv_path: self.gcc_wrapper,
             self.stdenv.drv_path: self.stdenv,
+            self.which.drv_path: self.which,
+            self.zlib.drv_path: self.zlib,
+            self.gnum4.drv_path: self.gnum4,
+            self.patchelf.drv_path: self.patchelf,
+            self.perl.drv_path: self.perl,
+            self.bison.drv_path: self.bison,
+            self.bash.drv_path: self.bash,
         }
         return {**self._prev.all_packages, **own}

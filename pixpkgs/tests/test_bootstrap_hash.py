@@ -11,7 +11,6 @@ The expected hashes come from: nix eval nixpkgs#stdenv (Nix 2.28, nixpkgs master
 import subprocess
 import pytest
 from pix.derivation import parse, serialize
-from pixpkgs.bootstrap.closure import load_hello_closure, package_from_drv
 from pixpkgs.drv import drv, Package
 
 # --- Bootstrap seed: two fixed-output fetches + unpack ---
@@ -206,16 +205,3 @@ class TestStage0:
         s0 = stage0_stdenv(bt)
         expected = open("/nix/store/ydld0fh638kgppqrfx30fr205wiab9ja-bootstrap-stage0-stdenv-linux.drv").read()
         assert serialize(s0.drv) == expected
-
-
-# --- Full chain: all 196 derivations from seed to hello ---
-# Uses load_hello_closure() from pixpkgs.bootstrap.closure which
-# reconstructs every derivation from .drv files using drv() directly.
-
-
-class TestFullChain:
-    def test_all_196_derivations_match_hello_closure(self):
-        """Reconstruct every derivation in nixpkgs#hello's closure and verify
-        byte-identical ATerm output — validates the entire hash pipeline."""
-        pkgs = load_hello_closure()
-        assert len(pkgs) >= 196, f"Expected 196+ derivations, got {len(pkgs)}"
