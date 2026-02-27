@@ -43,6 +43,7 @@ MKDERIVATION_DEFAULTS = {
     "patches": "",
     "propagatedBuildInputs": "",
     "propagatedNativeBuildInputs": "",
+    "strictDeps": "",
 }
 
 

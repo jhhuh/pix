@@ -25,12 +25,13 @@ from pixpkgs.bootstrap.helpers import (
 from pixpkgs.bootstrap.stage1 import Stage1
 from pixpkgs.drv import Package
 from pixpkgs.package_set import PackageSet
-from pixpkgs.bootstrap.sources import gmp_src, isl_src, mpc_src, mpfr_src
+from pixpkgs.bootstrap.sources import gmp_src, isl_src, libxcrypt_src, mpc_src, mpfr_src
 from pixpkgs.pkgs.cc_wrapper import make_gcc_wrapper
 from pixpkgs.pkgs.expand_response_params import make_expand_response_params
 from pixpkgs.pkgs.gmp import make_gmp
 from pixpkgs.pkgs.isl import make_isl
 from pixpkgs.pkgs.libmpc import make_libmpc
+from pixpkgs.pkgs.libxcrypt import make_libxcrypt
 from pixpkgs.pkgs.mpfr import make_mpfr
 from pixpkgs.pkgs.gnu_config import make_gnu_config
 from pixpkgs.pkgs.update_autotools import make_update_autotools_hook
@@ -64,6 +65,8 @@ EXPECTED_STAGE_XGCC = {
     "isl.out": "/nix/store/x0p0rfjp51kps8qypslvz0zy24a8yv92-isl-0.20",
     "libmpc.drv": "/nix/store/y7gga2zv5gm723hgd6j488qagyrrmqfk-libmpc-1.3.1.drv",
     "libmpc.out": "/nix/store/3cilgifl43vi073g9f7v8lw6gpd82zsp-libmpc-1.3.1",
+    "libxcrypt.drv": "/nix/store/dcjviapmsh40ransb323w1j1mx9sfiyl-libxcrypt-4.5.2.drv",
+    "libxcrypt.out": "/nix/store/p05a4xm5hj6adzypfaq3la6vwlwdylal-libxcrypt-4.5.2",
 }
 
 
@@ -279,6 +282,16 @@ class StageXgcc(PackageSet):
         )
 
     @cached_property
+    def libxcrypt(self) -> Package:
+        """libxcrypt 4.5.2 built with xgcc stdenv."""
+        return make_libxcrypt(
+            bootstrap_tools=self._prev._prev.bootstrap_tools,
+            stdenv=self.stdenv,
+            src=libxcrypt_src(),
+            perl=self.perl,  # stage1 perl via delegation
+        )
+
+    @cached_property
     def all_packages(self) -> dict[str, Package]:
         own = {
             self.cc_wrapper_stdenv.drv_path: self.cc_wrapper_stdenv,
@@ -294,5 +307,6 @@ class StageXgcc(PackageSet):
             self.mpfr.drv_path: self.mpfr,
             self.isl.drv_path: self.isl,
             self.libmpc.drv_path: self.libmpc,
+            self.libxcrypt.drv_path: self.libxcrypt,
         }
         return {**self._prev.all_packages, **own}
