@@ -147,3 +147,34 @@ PERL_SETUP_HOOK = _src("perl", "setup-hook.sh")
 
 BASH_PGRP_PIPE_PATCH = _src("bash", "pgrp-pipe-5.patch")
 SEPARATE_DEBUG_INFO_SH = _src("bash", "separate-debug-info.sh")
+
+# ---------------------------------------------------------------------------
+# gettext (pkgs/development/libraries/gettext/)
+# ---------------------------------------------------------------------------
+
+GETTEXT_PATCH_ABSOLUTE_PATHS = _src("gettext", "absolute-paths.diff")
+GETTEXT_PATCH_NO_POT_DATE = _src(
+    "gettext", "0001-msginit-Do-not-use-POT-Creation-Date.patch",
+)
+GETTEXT_PATCH_MEMORY_SAFETY = _src("gettext", "memory-safety.patch")
+GETTEXT_SETUP_HOOK = _src("gettext", "gettext-setup-hook.sh")
+
+# ---------------------------------------------------------------------------
+# nuke-references (pkgs/build-support/nuke-references/)
+# ---------------------------------------------------------------------------
+
+NUKE_REFS_SH = _src("nuke-references", "nuke-refs.sh")
+
+# ---------------------------------------------------------------------------
+# gcc patches (pkgs/development/compilers/gcc/patches/)
+# ---------------------------------------------------------------------------
+
+GCC_NO_SYS_DIRS_PATCH = _src("gcc", "gcc-12-no-sys-dirs.patch")
+GCC_NO_SYS_DIRS_RISCV_PATCH = _src("gcc", "no-sys-dirs-riscv.patch")
+GCC_MANGLE_NIX_STORE_PATCH = _src(
+    "gcc", "mangle-NIX_STORE-in-__FILE__.patch",
+)
+GCC_PPC_MUSL_PATCH = _src("gcc", "ppc-musl.patch")
+GCC_CFI_STARTPROC_PATCH = _src(
+    "gcc", "cfi_startproc-reorder-label-14-1.diff",
+)

@@ -14,6 +14,12 @@ Like nixpkgs/pkgs/stdenv/linux/default.nix stage 1:
 
 Packages compiled with stage1 stdenv (for use in later stages):
   - which, zlib, gnum4, patchelf, perl, bison, bash
+
+Note: gettext and texinfo live in StageXgcc, not here. They explicitly
+reference updateAutotoolsGnuConfigScriptsHook in nativeBuildInputs, which
+in the "stage1 evaluation of nixpkgs" resolves to the xgcc infrastructure
+version (= StageXgcc.update_autotools_hook), not the stage1 infrastructure
+version. See nixpkgs-bootstrap-scope-resolution-for-dependencies.md.
 """
 
 from functools import cached_property
@@ -23,7 +29,8 @@ from pixpkgs.bootstrap.helpers import (
 )
 from pixpkgs.bootstrap.sources import (
     bash_patch_001, bash_patch_002, bash_patch_003, bash_src,
-    bison_src, m4_src, patchelf_src, perl_src, which_src, zlib_src,
+    bison_src, m4_src, patchelf_src, perl_src,
+    which_src, zlib_src,
 )
 from pixpkgs.bootstrap.stage0 import Stage0
 from pixpkgs.drv import Package

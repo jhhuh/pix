@@ -22,19 +22,29 @@ from functools import cached_property
 from pixpkgs.bootstrap.helpers import (
     STAGE0_PREHOOK, make_stdenv,
 )
+from pixpkgs.bootstrap.sources import (
+    bash_patch_001, bash_patch_002, bash_patch_003, bash_src,
+    gcc_src, gettext_src, gmp_src, isl_src, libxcrypt_src, mpc_src, mpfr_src,
+    texinfo_src, which_src,
+)
 from pixpkgs.bootstrap.stage1 import Stage1
 from pixpkgs.drv import Package
 from pixpkgs.package_set import PackageSet
-from pixpkgs.bootstrap.sources import gmp_src, isl_src, libxcrypt_src, mpc_src, mpfr_src
+from pixpkgs.pkgs.bash import make_bash
 from pixpkgs.pkgs.cc_wrapper import make_gcc_wrapper
 from pixpkgs.pkgs.expand_response_params import make_expand_response_params
+from pixpkgs.pkgs.gettext import make_gettext
 from pixpkgs.pkgs.gmp import make_gmp
+from pixpkgs.pkgs.gnu_config import make_gnu_config
 from pixpkgs.pkgs.isl import make_isl
 from pixpkgs.pkgs.libmpc import make_libmpc
 from pixpkgs.pkgs.libxcrypt import make_libxcrypt
 from pixpkgs.pkgs.mpfr import make_mpfr
-from pixpkgs.pkgs.gnu_config import make_gnu_config
+from pixpkgs.pkgs.nuke_references import make_nuke_references
+from pixpkgs.pkgs.texinfo import make_texinfo
 from pixpkgs.pkgs.update_autotools import make_update_autotools_hook
+from pixpkgs.pkgs.which import make_which
+from pixpkgs.pkgs.xgcc import make_xgcc
 from pixpkgs.vendor import DEFAULT_NATIVE_BUILD_INPUTS
 
 
@@ -67,6 +77,23 @@ EXPECTED_STAGE_XGCC = {
     "libmpc.out": "/nix/store/3cilgifl43vi073g9f7v8lw6gpd82zsp-libmpc-1.3.1",
     "libxcrypt.drv": "/nix/store/dcjviapmsh40ransb323w1j1mx9sfiyl-libxcrypt-4.5.2.drv",
     "libxcrypt.out": "/nix/store/p05a4xm5hj6adzypfaq3la6vwlwdylal-libxcrypt-4.5.2",
+    # --- stage1-evaluation packages (need xgcc infra update_autotools_hook) ---
+    "bash_pkg.drv": "/nix/store/v9limmbzkvjcdrfijq5ig760yg5gvza6-bash-5.3p3.drv",
+    "bash_pkg.out": "/nix/store/7fmqg3y3vgzd31a40azmz2szq34hmp9z-bash-5.3p3",
+    "gettext.drv": "/nix/store/i32afvwnj2ph8z7zxrkl9b78djbknmbb-gettext-0.25.1.drv",
+    "gettext.out": "/nix/store/x28dwagyvy8xyfbi0ggzib5jl2icy7fk-gettext-0.25.1",
+    "texinfo.drv": "/nix/store/rz7galzrzr5y99cbqp8yz3b27c8zpvvb-texinfo-7.2.drv",
+    "texinfo.out": "/nix/store/bkjfh4f71d24blykcljpg6gcrkqyx29j-texinfo-7.2",
+    # --- xgcc prerequisites ---
+    "nuke_references.drv": "/nix/store/lrars4gba2q7l2437nw5ir2qglsclm4v-nuke-references.drv",
+    "nuke_references.out": "/nix/store/pm6lhapwm6p9ffq7hsb01s37hi8dk8jf-nuke-references",
+    "which_pkg.drv": "/nix/store/dg0zhxdxrzap31fkk9d6r19ravryscj4-which-2.23.drv",
+    "which_pkg.out": "/nix/store/vpkqvb9nwa2c13w6rmf8zlmwchad6xir-which-2.23",
+    "bash_xgcc.drv": "/nix/store/bz65kaqhwsn63sihzr1yr0rapdx7mx46-bash-5.3p3.drv",
+    "bash_xgcc.out": "/nix/store/w4qlsz5kzg93nqjs8v44b7vgcinx4wsq-bash-5.3p3",
+    # --- xgcc itself ---
+    "xgcc.drv": "/nix/store/bm5kzm1lv0dkrznzc79zl5rwbv71460w-xgcc-14.3.0.drv",
+    "xgcc.out": "/nix/store/b9fm5nak3xrg6nhpmclqh45x2z1ssdnq-xgcc-14.3.0",
 }
 
 
@@ -291,6 +318,127 @@ class StageXgcc(PackageSet):
             perl=self.perl,  # stage1 perl via delegation
         )
 
+    # --- "stage1 evaluation of nixpkgs" packages ---
+    # These are compiled with stage1 stdenv but explicitly reference
+    # updateAutotoolsGnuConfigScriptsHook in nativeBuildInputs, which
+    # in the stage1 nixpkgs evaluation resolves to the xgcc infrastructure
+    # version (self.update_autotools_hook), not stage1's infrastructure version.
+
+    @cached_property
+    def bash_pkg(self) -> Package:
+        """Bash rebuilt with xgcc infrastructure update_autotools_hook.
+
+        This is the "stage1 pkg-set" bash — same as stage1 bash but with
+        the xgcc infrastructure update_autotools_hook in nativeBuildInputs.
+        Used by gettext and texinfo (which need bash.dev as buildInput).
+        """
+        return make_bash(
+            bootstrap_tools=self._prev._prev.bootstrap_tools,
+            stdenv=self._prev.stdenv,
+            src=bash_src(),
+            bash_patch_001=bash_patch_001(),
+            bash_patch_002=bash_patch_002(),
+            bash_patch_003=bash_patch_003(),
+            gcc_wrapper=self._prev.gcc_wrapper,
+            update_autotools_hook=self.update_autotools_hook,
+            bison=self._prev.bison,
+        )
+
+    @cached_property
+    def gettext(self) -> Package:
+        """gettext 0.25.1, stage1 stdenv + xgcc infra update_autotools_hook."""
+        return make_gettext(
+            bootstrap_tools=self._prev._prev.bootstrap_tools,
+            stdenv=self._prev.stdenv,
+            src=gettext_src(),
+            bash=self.bash_pkg,
+            update_autotools_hook=self.update_autotools_hook,
+        )
+
+    @cached_property
+    def texinfo(self) -> Package:
+        """texinfo 7.2, stage1 stdenv + xgcc infra update_autotools_hook."""
+        return make_texinfo(
+            bootstrap_tools=self._prev._prev.bootstrap_tools,
+            stdenv=self._prev.stdenv,
+            src=texinfo_src(),
+            bash=self.bash_pkg,
+            gcc_wrapper=self._prev.gcc_wrapper,
+            perl=self._prev.perl,
+            update_autotools_hook=self.update_autotools_hook,
+        )
+
+    # --- xgcc prerequisites (built with xgcc stdenv) ---
+
+    @cached_property
+    def nuke_references(self) -> Package:
+        """nuke-references: strips store refs from build outputs.
+
+        Uses xgcc stdenvNoCC (no compiler needed, just installs a script).
+        """
+        return make_nuke_references(
+            bootstrap_tools=self._prev._prev.bootstrap_tools,
+            stdenv=self.stdenv_no_cc,
+            perl=self._prev.perl,
+        )
+
+    @cached_property
+    def which_pkg(self) -> Package:
+        """which-2.23 rebuilt with xgcc stdenv."""
+        return make_which(
+            self._prev._prev.bootstrap_tools, self.stdenv, which_src(),
+        )
+
+    @cached_property
+    def bash_xgcc(self) -> Package:
+        """bash-5.3p3 rebuilt with xgcc stdenv.
+
+        Uses xgcc gcc_wrapper for depsBuildBuild and xgcc pkg-set
+        update_autotools_hook_pkg for nativeBuildInputs.
+        """
+        return make_bash(
+            bootstrap_tools=self._prev._prev.bootstrap_tools,
+            stdenv=self.stdenv,
+            src=bash_src(),
+            bash_patch_001=bash_patch_001(),
+            bash_patch_002=bash_patch_002(),
+            bash_patch_003=bash_patch_003(),
+            gcc_wrapper=self.gcc_wrapper,
+            update_autotools_hook=self.update_autotools_hook_pkg,
+            bison=self._prev.bison,
+        )
+
+    # --- xgcc itself ---
+
+    @cached_property
+    def xgcc(self) -> Package:
+        """gcc-unwrapped 14.3.0 compiled from source.
+
+        The most complex package in the bootstrap chain. 6 outputs,
+        19 inputDrvs, massive env vars with shell scripts.
+        """
+        return make_xgcc(
+            bootstrap_tools=self._prev._prev.bootstrap_tools,
+            stdenv=self.stdenv,
+            src=gcc_src(),
+            gcc_wrapper=self.gcc_wrapper,
+            binutils_wrapper=self._prev.binutils_wrapper,
+            patchelf=self._prev.patchelf,
+            glibc_bootstrap_files=self._prev.glibc_bootstrap_files,
+            gmp=self.gmp,
+            mpfr=self.mpfr,
+            libmpc=self.libmpc,
+            libxcrypt=self.libxcrypt,
+            isl=self.isl,
+            zlib=self._prev.zlib,
+            texinfo=self.texinfo,
+            which_pkg=self.which_pkg,
+            gettext=self.gettext,
+            perl=self._prev.perl,
+            bash_xgcc=self.bash_xgcc,
+            nuke_references=self.nuke_references,
+        )
+
     @cached_property
     def all_packages(self) -> dict[str, Package]:
         own = {
@@ -308,5 +456,12 @@ class StageXgcc(PackageSet):
             self.isl.drv_path: self.isl,
             self.libmpc.drv_path: self.libmpc,
             self.libxcrypt.drv_path: self.libxcrypt,
+            self.bash_pkg.drv_path: self.bash_pkg,
+            self.gettext.drv_path: self.gettext,
+            self.texinfo.drv_path: self.texinfo,
+            self.nuke_references.drv_path: self.nuke_references,
+            self.which_pkg.drv_path: self.which_pkg,
+            self.bash_xgcc.drv_path: self.bash_xgcc,
+            self.xgcc.drv_path: self.xgcc,
         }
         return {**self._prev.all_packages, **own}

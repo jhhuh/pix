@@ -99,7 +99,7 @@ class TestStage1:
         assert Stage1().stdenv.out == EXPECTED_STAGE1["stdenv.out"]
 
     def test_all_packages_has_19(self):
-        assert len(Stage1().all_packages) == 19  # 4 from stage0 + 8 infra + 7 compiled
+        assert len(Stage1().all_packages) == 19  # 4 from stage0 + 8 infra + 7 compiled (bash/bison/gnum4/patchelf/perl/which/zlib)
 
     def test_inherits_stage0(self):
         s1 = Stage1()
@@ -182,8 +182,50 @@ class TestStageXgcc:
     def test_libxcrypt_out_path(self):
         assert StageXgcc().libxcrypt.out == EXPECTED_STAGE_XGCC["libxcrypt.out"]
 
-    def test_all_packages_has_33(self):
-        assert len(StageXgcc().all_packages) == 33  # 19 from stage1 + 14 new
+    def test_bash_pkg_drv_path(self):
+        assert StageXgcc().bash_pkg.drv_path == EXPECTED_STAGE_XGCC["bash_pkg.drv"]
+
+    def test_bash_pkg_out_path(self):
+        assert StageXgcc().bash_pkg.out == EXPECTED_STAGE_XGCC["bash_pkg.out"]
+
+    def test_gettext_drv_path(self):
+        assert StageXgcc().gettext.drv_path == EXPECTED_STAGE_XGCC["gettext.drv"]
+
+    def test_gettext_out_path(self):
+        assert StageXgcc().gettext.out == EXPECTED_STAGE_XGCC["gettext.out"]
+
+    def test_texinfo_drv_path(self):
+        assert StageXgcc().texinfo.drv_path == EXPECTED_STAGE_XGCC["texinfo.drv"]
+
+    def test_texinfo_out_path(self):
+        assert StageXgcc().texinfo.out == EXPECTED_STAGE_XGCC["texinfo.out"]
+
+    def test_nuke_references_drv_path(self):
+        assert StageXgcc().nuke_references.drv_path == EXPECTED_STAGE_XGCC["nuke_references.drv"]
+
+    def test_nuke_references_out_path(self):
+        assert StageXgcc().nuke_references.out == EXPECTED_STAGE_XGCC["nuke_references.out"]
+
+    def test_which_pkg_drv_path(self):
+        assert StageXgcc().which_pkg.drv_path == EXPECTED_STAGE_XGCC["which_pkg.drv"]
+
+    def test_which_pkg_out_path(self):
+        assert StageXgcc().which_pkg.out == EXPECTED_STAGE_XGCC["which_pkg.out"]
+
+    def test_bash_xgcc_drv_path(self):
+        assert StageXgcc().bash_xgcc.drv_path == EXPECTED_STAGE_XGCC["bash_xgcc.drv"]
+
+    def test_bash_xgcc_out_path(self):
+        assert StageXgcc().bash_xgcc.out == EXPECTED_STAGE_XGCC["bash_xgcc.out"]
+
+    def test_xgcc_drv_path(self):
+        assert StageXgcc().xgcc.drv_path == EXPECTED_STAGE_XGCC["xgcc.drv"]
+
+    def test_xgcc_out_path(self):
+        assert StageXgcc().xgcc.out == EXPECTED_STAGE_XGCC["xgcc.out"]
+
+    def test_all_packages_has_40(self):
+        assert len(StageXgcc().all_packages) == 40  # 19 from stage1 + 21 new
 
     def test_inherits_stage1(self):
         sx = StageXgcc()
